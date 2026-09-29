@@ -56,10 +56,16 @@ public class EstudianteController {
 
     // ── ACTUALIZAR ───────────────────────────────────────────
     @PostMapping("/actualizar")
-    public String actualizar(@ModelAttribute Estudiante estudiante,
-                             RedirectAttributes redirectAttributes) {
-        estudianteService.guardar(estudiante);
-        redirectAttributes.addFlashAttribute("mensaje", "Estudiante actualizado correctamente.");
+    public String actualizar(@ModelAttribute Estudiante form, RedirectAttributes ra) {
+        Estudiante e = estudianteService.buscarPorId(form.getId()).orElseThrow();
+        e.setNombre(form.getNombre());
+        e.setApellido(form.getApellido());
+        e.setDni(form.getDni());
+        e.setEmail(form.getEmail());
+        e.setTelefono(form.getTelefono());
+        e.setFechaInscripcion(form.getFechaInscripcion());
+        estudianteService.guardar(e);
+        ra.addFlashAttribute("mensaje", "Estudiante actualizado correctamente.");
         return "redirect:/estudiantes";
     }
 

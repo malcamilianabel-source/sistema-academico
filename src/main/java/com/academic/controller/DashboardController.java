@@ -12,24 +12,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class DashboardController {
-
-    @Autowired
-    private EstudianteService estudianteService;
-
-    @Autowired
-    private DocenteService docenteService;
-
-    @Autowired
-    private CursoService cursoService;
-
-    @Autowired
-    private UsuarioService usuarioService;
+    @Autowired private EstudianteService estudianteService;
+    @Autowired private DocenteService docenteService;
+    @Autowired private CursoService cursoService;
+    @Autowired private UsuarioService usuarioService;
 
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
-        if (session.getAttribute("usuario") == null) {
-            return "redirect:/login";
-        }
+        if (session.getAttribute("usuario") == null) return "redirect:/login";
         model.addAttribute("totalEstudiantes", estudianteService.contarTotal());
         model.addAttribute("totalDocentes", docenteService.contarTotal());
         model.addAttribute("totalCursos", cursoService.contarTotal());

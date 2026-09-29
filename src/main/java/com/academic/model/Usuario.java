@@ -1,5 +1,6 @@
 package com.academic.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,8 +25,9 @@ public class Usuario {
     private String email;
 
     @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(nullable = false, length = 20)
-    private String rol; // ADMIN, DOCENTE, ESTUDIANTE
+    private String rol;
 }

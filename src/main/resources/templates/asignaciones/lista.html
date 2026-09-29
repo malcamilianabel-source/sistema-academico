@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignaciones - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
+            <h1 class="page-title"><i class="bi bi-person-check-fill me-2"></i>Asignaciones</h1>
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size:0.85rem; color:#3D4D55;"
+                      th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${mensaje}"></span>
+            </div>
+
+            <div class="tabla-container">
+                <div class="tabla-header">
+                    <h5><i class="bi bi-person-check-fill me-2" style="color:#B58863;"></i>Lista de Asignaciones</h5>
+                    <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+                        <i class="bi bi-plus-lg me-1"></i> Nueva Asignación
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Curso</th>
+                            <th>Código</th>
+                            <th>Docente</th>
+                            <th>Periodo</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="a, stat : ${asignaciones}">
+                            <td th:text="${stat.count}"></td>
+                            <td th:text="${a.curso.nombre}"></td>
+                            <td th:text="${a.curso.codigo}"></td>
+                            <td th:text="${a.docente.nombre + ' ' + a.docente.apellido}"></td>
+                            <td th:text="${a.periodo.nombre}"></td>
+                            <td>
+                                <button class="btn btn-edit btn-sm me-1"
+                                        th:onclick="'cargarEditar(' + ${a.id} + ')'"
+                                        data-bs-toggle="modal" data-bs-target="#modalEditar">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <a th:href="@{/asignaciones/eliminar/{id}(id=${a.id})}"
+                                   class="btn btn-delete btn-sm"
+                                   onclick="return confirm('¿Eliminar esta asignación?')">
+                                    <i class="bi bi-trash-fill"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(asignaciones)}">
+                            <td colspan="6" class="text-center py-4" style="color:#A79E9C;">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                No se encontraron asignaciones.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nueva Asignación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/asignaciones/guardar}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Curso *</label>
+                        <select name="cursoId" class="form-select" required>
+                            <option value="">Seleccionar...</option>
+                            <option th:each="c : ${cursos}" th:value="${c.id}" th:text="${c.codigo + ' - ' + c.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Docente *</label>
+                        <select name="docenteId" class="form-select" required>
+                            <option value="">Seleccionar...</option>
+                            <option th:each="d : ${docentes}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Periodo *</label>
+                        <select name="periodoId" class="form-select" required>
+                            <option value="">Seleccionar...</option>
+                            <option th:each="p : ${periodos}" th:value="${p.id}" th:text="${p.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-accent">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Asignación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/asignaciones/actualizar}" method="post">
+                <input type="hidden" name="id" id="editId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Curso *</label>
+                        <select name="cursoId" id="editCursoId" class="form-select" required>
+                            <option th:each="c : ${cursos}" th:value="${c.id}" th:text="${c.codigo + ' - ' + c.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Docente *</label>
+                        <select name="docenteId" id="editDocenteId" class="form-select" required>
+                            <option th:each="d : ${docentes}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Periodo *</label>
+                        <select name="periodoId" id="editPeriodoId" class="form-select" required>
+                            <option th:each="p : ${periodos}" th:value="${p.id}" th:text="${p.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-accent">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function cargarEditar(id) {
+        fetch('/asignaciones/editar/' + id)
+            .then(response => response.json())
+            .then(a => {
+                document.getElementById('editId').value = a.id;
+                document.getElementById('editCursoId').value = a.curso.id;
+                document.getElementById('editDocenteId').value = a.docente.id;
+                document.getElementById('editPeriodoId').value = a.periodo.id;
+            });
+    }
+</script>
+</body>
+</html>
