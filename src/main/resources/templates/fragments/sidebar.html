@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="sidebar" id="sidebar">
+
+    <!-- BRAND -->
+    <div class="sidebar-brand">
+        <h5><i class="bi bi-mortarboard-fill me-2"></i>SistemaAcadémico</h5>
+        <small>Gestión y Seguimiento</small>
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Principal</div>
+
+        <a th:href="@{/dashboard}"
+           th:classappend="${paginaActual == 'dashboard'} ? 'active'"
+           class="nav-link">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+
+        <div class="nav-section-label mt-2">Gestión</div>
+
+        <a th:href="@{/estudiantes}"
+           th:classappend="${paginaActual == 'estudiantes'} ? 'active'"
+           class="nav-link">
+            <i class="bi bi-people-fill"></i> Estudiantes
+        </a>
+
+        <a th:href="@{/docentes}"
+           th:classappend="${paginaActual == 'docentes'} ? 'active'"
+           class="nav-link">
+            <i class="bi bi-person-workspace"></i> Docentes
+        </a>
+
+        <a th:href="@{/cursos}"
+           th:classappend="${paginaActual == 'cursos'} ? 'active'"
+           class="nav-link">
+            <i class="bi bi-book-fill"></i> Cursos
+        </a>
+    </nav>
+
+    <!-- FOOTER -->
+    <div class="sidebar-footer">
+        <a th:href="@{/logout}">
+            <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

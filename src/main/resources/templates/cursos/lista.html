@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursos - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div id="main-content" class="flex-grow-1">
+
+        <div class="top-navbar">
+            <h1 class="page-title"><i class="bi bi-book-fill me-2"></i>Cursos</h1>
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size:0.85rem; color:#3D4D55;"
+                      th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge"
+                     th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+
+        <div class="page-content">
+
+            <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${mensaje}"></span>
+            </div>
+
+            <div class="tabla-container">
+                <div class="tabla-header">
+                    <h5><i class="bi bi-book-fill me-2" style="color:#B58863;"></i>Lista de Cursos</h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form th:action="@{/cursos}" method="get" class="d-flex gap-2">
+                            <input type="text" name="buscar" class="form-control form-control-sm"
+                                   placeholder="Buscar curso..." style="width:200px;"
+                                   th:value="${buscar}">
+                            <button type="submit" class="btn btn-sm btn-accent">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <a th:href="@{/cursos}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        </form>
+                        <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+                            <i class="bi bi-plus-lg me-1"></i> Nuevo Curso
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nombre</th>
+                                <th>Código</th>
+                                <th>Créditos</th>
+                                <th>Ciclo</th>
+                                <th>Horas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c, stat : ${cursos}">
+                                <td th:text="${stat.count}"></td>
+                                <td th:text="${c.nombre}"></td>
+                                <td>
+                                    <span class="badge" style="background-color:#3D4D55;"
+                                          th:text="${c.codigo}"></span>
+                                </td>
+                                <td th:text="${c.creditos}"></td>
+                                <td th:text="${c.ciclo}"></td>
+                                <td th:text="${c.horas}"></td>
+                                <td>
+                                    <button class="btn btn-edit btn-sm me-1"
+                                            th:onclick="'cargarEditar(' + ${c.id} + ')'"
+                                            data-bs-toggle="modal" data-bs-target="#modalEditar">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                    <a th:href="@{/cursos/eliminar/{id}(id=${c.id})}"
+                                       class="btn btn-delete btn-sm"
+                                       onclick="return confirm('¿Eliminar este curso?')">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(cursos)}">
+                                <td colspan="7" class="text-center py-4" style="color:#A79E9C;">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    No se encontraron cursos.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL NUEVO ══════════════════════════════════════════ -->
+<div class="modal fade" id="modalNuevo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-book me-2"></i>Nuevo Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/cursos/guardar}" method="post">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nombre del Curso *</label>
+                            <input type="text" name="nombre" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Código *</label>
+                            <input type="text" name="codigo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Créditos</label>
+                            <input type="number" name="creditos" class="form-control" min="1" max="10">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ciclo</label>
+                            <input type="number" name="ciclo" class="form-control" min="1" max="10">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Horas</label>
+                            <input type="number" name="horas" class="form-control" min="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-accent btn-sm">
+                        <i class="bi bi-save me-1"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL EDITAR ═════════════════════════════════════════ -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Curso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/cursos/actualizar}" method="post">
+                <input type="hidden" id="editId" name="id">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nombre del Curso *</label>
+                            <input type="text" id="editNombre" name="nombre" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Código *</label>
+                            <input type="text" id="editCodigo" name="codigo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Créditos</label>
+                            <input type="number" id="editCreditos" name="creditos" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ciclo</label>
+                            <input type="number" id="editCiclo" name="ciclo" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Horas</label>
+                            <input type="number" id="editHoras" name="horas" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-accent btn-sm">
+                        <i class="bi bi-save me-1"></i> Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function cargarEditar(id) {
+        fetch('/cursos/editar/' + id)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('editId').value       = data.id;
+                document.getElementById('editNombre').value   = data.nombre;
+                document.getElementById('editCodigo').value   = data.codigo;
+                document.getElementById('editCreditos').value = data.creditos || '';
+                document.getElementById('editCiclo').value    = data.ciclo || '';
+                document.getElementById('editHoras').value    = data.horas || '';
+            });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+/* ============================================================
+   SISTEMA ACADÉMICO - Estilos Personalizados
+   Paleta: #10232A | #3D4D55 | #A79E9C | #D3C3B9 | #B58863 | #161616
+   ============================================================ */
+
+:root {
+    --color-sidebar:    #10232A;
+    --color-secondary:  #3D4D55;
+    --color-mid:        #A79E9C;
+    --color-light:      #D3C3B9;
+    --color-accent:     #B58863;
+    --color-dark:       #161616;
+    --sidebar-width:    260px;
+}
+
+/* ── BODY ───────────────────────────────────────────── */
+body {
+    background-color: #f0ece8;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--color-dark);
+}
+
+/* ── SIDEBAR ────────────────────────────────────────── */
+#sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background-color: var(--color-sidebar);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    padding-top: 0;
+    transition: all 0.3s;
+}
+
+.sidebar-brand {
+    background-color: var(--color-dark);
+    padding: 1.5rem 1.2rem;
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.sidebar-brand h5 {
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-brand small {
+    color: var(--color-mid);
+    font-size: 0.72rem;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+    flex: 1;
+}
+
+.nav-section-label {
+    color: var(--color-mid);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 0.8rem 1.2rem 0.3rem;
+}
+
+.sidebar-nav .nav-link {
+    color: var(--color-light);
+    padding: 0.65rem 1.2rem;
+    border-radius: 0;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: var(--color-secondary);
+    color: #fff;
+    border-left-color: var(--color-accent);
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: var(--color-secondary);
+    color: var(--color-accent);
+    border-left-color: var(--color-accent);
+    font-weight: 600;
+}
+
+.sidebar-nav .nav-link i {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.2rem;
+    border-top: 1px solid var(--color-secondary);
+}
+
+.sidebar-footer a {
+    color: var(--color-mid);
+    font-size: 0.82rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+}
+
+.sidebar-footer a:hover {
+    color: #fff;
+}
+
+/* ── MAIN CONTENT ───────────────────────────────────── */
+#main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+}
+
+/* ── TOP NAVBAR ─────────────────────────────────────── */
+.top-navbar {
+    background-color: #fff;
+    border-bottom: 1px solid #e0d8d2;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+}
+
+.top-navbar .page-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-sidebar);
+    margin: 0;
+}
+
+.user-badge {
+    background-color: var(--color-sidebar);
+    color: var(--color-accent);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* ── PAGE CONTENT ───────────────────────────────────── */
+.page-content {
+    padding: 1.8rem;
+}
+
+/* ── CARDS DASHBOARD ────────────────────────────────── */
+.stat-card {
+    background-color: #fff;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 1.4rem 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.stat-icon.estudiantes { background-color: #e8f4fd; color: #1565C0; }
+.stat-icon.docentes    { background-color: #f0faf0; color: #2E7D32; }
+.stat-icon.cursos      { background-color: #fff8e1; color: #F57F17; }
+.stat-icon.usuarios    { background-color: #fce4ec; color: #C62828; }
+
+.stat-info h3 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--color-sidebar);
+    margin: 0;
+    line-height: 1;
+}
+
+.stat-info p {
+    color: var(--color-mid);
+    font-size: 0.82rem;
+    margin: 0.2rem 0 0;
+}
+
+/* ── TABLES ─────────────────────────────────────────── */
+.tabla-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.tabla-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid #f0ece8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.tabla-header h5 {
+    font-weight: 600;
+    color: var(--color-sidebar);
+    margin: 0;
+}
+
+.table thead th {
+    background-color: var(--color-sidebar);
+    color: var(--color-light);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: none;
+    padding: 0.85rem 1rem;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f5f0ec;
+    transition: background-color 0.15s;
+}
+
+.table tbody tr:hover {
+    background-color: #faf7f4;
+}
+
+.table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    font-size: 0.88rem;
+    color: var(--color-dark);
+    border: none;
+}
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn-accent {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.btn-accent:hover {
+    background-color: #a07550;
+    border-color: #a07550;
+    color: #fff;
+}
+
+.btn-edit {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: #fff;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+}
+
+.btn-edit:hover {
+    background-color: #2f3d45;
+    color: #fff;
+}
+
+.btn-delete {
+    background-color: transparent;
+    border-color: #dc3545;
+    color: #dc3545;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+}
+
+.btn-delete:hover {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* ── MODALS ──────────────────────────────────────────── */
+.modal-header {
+    background-color: var(--color-sidebar);
+    color: #fff;
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-light);
+}
+
+.form-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-secondary);
+    margin-bottom: 0.3rem;
+}
+
+.form-control:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.2rem rgba(181,136,99,0.2);
+}
+
+/* ── ALERTS ──────────────────────────────────────────── */
+.alert-success {
+    background-color: #f0faf0;
+    border-color: #c3e6cb;
+    color: #2E7D32;
+    font-size: 0.88rem;
+}
+
+/* ── BADGE ROL ───────────────────────────────────────── */
+.badge-admin     { background-color: var(--color-accent); color: #fff; }
+.badge-docente   { background-color: var(--color-secondary); color: #fff; }
+.badge-estudiant { background-color: #e8f4fd; color: #1565C0; }
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 768px) {
+    #sidebar { width: 100%; min-height: auto; position: relative; }
+    #main-content { margin-left: 0; }
+}
