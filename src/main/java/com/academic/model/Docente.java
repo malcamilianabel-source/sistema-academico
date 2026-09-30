@@ -27,7 +27,7 @@ public class Docente {
     @Column(nullable = false, unique = true, length = 20)
     private String dni;
 
-    @Column(length = 20)
+    @Column(length = 20, unique = true)
     private String telefono;
 
     @Column(length = 150)

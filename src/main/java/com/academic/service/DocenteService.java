@@ -37,4 +37,27 @@ public class DocenteService {
     public long contarTotal() {
         return docenteRepository.count();
     }
+
+    public boolean existeDni(String dni, Long excludeId) {
+        Optional<Docente> existente = docenteRepository.findByDni(dni);
+        if (existente.isEmpty()) return false;
+        if (excludeId == null) return true;
+        return !existente.get().getId().equals(excludeId);
+    }
+
+    public boolean existeEmail(String email, Long excludeId) {
+        Optional<Docente> existente = docenteRepository.findByEmail(email);
+        if (existente.isEmpty()) return false;
+        if (excludeId == null) return true;
+        return !existente.get().getId().equals(excludeId);
+    }
+
+    public boolean existeTelefono(String telefono, Long excludeId) {
+        if (telefono == null || telefono.isBlank()) return false;
+
+        Optional<Docente> existente = docenteRepository.findByTelefono(telefono);
+        if (existente.isEmpty()) return false;
+        if (excludeId == null) return true;
+        return !existente.get().getId().equals(excludeId);
+    }
 }

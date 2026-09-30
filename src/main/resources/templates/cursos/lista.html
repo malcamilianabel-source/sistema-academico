@@ -9,92 +9,58 @@
     <link th:href="@{/css/estilos.css}" rel="stylesheet">
 </head>
 <body>
-
+<div id="sidebar-overlay"></div>
 <div class="d-flex">
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-
     <div id="main-content" class="flex-grow-1">
-
         <div class="top-navbar">
-            <h1 class="page-title"><i class="bi bi-book-fill me-2"></i>Cursos</h1>
             <div class="d-flex align-items-center gap-2">
-                <span style="font-size:0.85rem; color:#3D4D55;"
-                      th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
-                <div class="user-badge"
-                     th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+                <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
+                <h1 class="page-title"><i class="bi bi-book-fill me-2"></i>Cursos</h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
             </div>
         </div>
-
         <div class="page-content">
-
             <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2">
-                <i class="bi bi-check-circle-fill"></i>
-                <span th:text="${mensaje}"></span>
+                <i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span>
             </div>
-
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-book-fill me-2" style="color:#B58863;"></i>Lista de Cursos</h5>
                     <div class="d-flex gap-2 flex-wrap">
-                        <form th:action="@{/cursos}" method="get" class="d-flex gap-2">
-                            <input type="text" name="buscar" class="form-control form-control-sm"
-                                   placeholder="Buscar curso..." style="width:200px;"
-                                   th:value="${buscar}">
-                            <button type="submit" class="btn btn-sm btn-accent">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <a th:href="@{/cursos}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-x"></i>
-                            </a>
+                        <form th:action="@{/cursos}" method="get" class="search-form">
+                            <input type="text" name="buscar" class="form-control form-control-sm" placeholder="Buscar curso..." th:value="${buscar}">
+                            <button type="submit" class="btn btn-sm btn-accent"><i class="bi bi-search"></i></button>
+                            <a th:href="@{/cursos}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x"></i></a>
                         </form>
                         <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo">
                             <i class="bi bi-plus-lg me-1"></i> Nuevo Curso
                         </button>
                     </div>
                 </div>
-
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Nombre</th>
-                                <th>Código</th>
-                                <th>Créditos</th>
-                                <th>Ciclo</th>
-                                <th>Horas</th>
-                                <th>Acciones</th>
-                            </tr>
+                            <tr><th>#</th><th>Nombre</th><th>Código</th><th class="col-hide-sm">Créditos</th><th class="col-hide-sm">Ciclo</th><th class="col-hide-sm">Horas</th><th>Acciones</th></tr>
                         </thead>
                         <tbody>
                             <tr th:each="c, stat : ${cursos}">
                                 <td th:text="${stat.count}"></td>
                                 <td th:text="${c.nombre}"></td>
+                                <td><span class="badge" style="background-color:#3D4D55;" th:text="${c.codigo}"></span></td>
+                                <td class="col-hide-sm" th:text="${c.creditos}"></td>
+                                <td class="col-hide-sm" th:text="${c.ciclo}"></td>
+                                <td class="col-hide-sm" th:text="${c.horas}"></td>
                                 <td>
-                                    <span class="badge" style="background-color:#3D4D55;"
-                                          th:text="${c.codigo}"></span>
-                                </td>
-                                <td th:text="${c.creditos}"></td>
-                                <td th:text="${c.ciclo}"></td>
-                                <td th:text="${c.horas}"></td>
-                                <td>
-                                    <button class="btn btn-edit btn-sm me-1"
-                                            th:onclick="'cargarEditar(' + ${c.id} + ')'"
-                                            data-bs-toggle="modal" data-bs-target="#modalEditar">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </button>
-                                    <a th:href="@{/cursos/eliminar/{id}(id=${c.id})}"
-                                       class="btn btn-delete btn-sm"
-                                       onclick="return confirm('¿Eliminar este curso?')">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </a>
+                                    <button class="btn btn-edit btn-sm me-1" th:onclick="'cargarEditar(' + ${c.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar"><i class="bi bi-pencil-fill"></i></button>
+                                    <a th:href="@{/cursos/eliminar/{id}(id=${c.id})}" class="btn btn-delete btn-sm" onclick="return confirm('¿Eliminar este curso?')"><i class="bi bi-trash-fill"></i></a>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(cursos)}">
-                                <td colspan="7" class="text-center py-4" style="color:#A79E9C;">
-                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    No se encontraron cursos.
-                                </td>
+                                <td colspan="7" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No se encontraron cursos.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -104,89 +70,92 @@
     </div>
 </div>
 
-<!-- ══ MODAL NUEVO ══════════════════════════════════════════ -->
+<!-- MODAL NUEVO -->
 <div class="modal fade" id="modalNuevo" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-book me-2"></i>Nuevo Curso</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/cursos/guardar}" method="post">
+            <form th:action="@{/cursos/guardar}" method="post" id="formNuevo" novalidate>
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Nombre del Curso *</label>
-                            <input type="text" name="nombre" class="form-control" required>
+                            <input type="text" name="nombre" class="form-control" minlength="3" maxlength="150" required>
+                            <div class="invalid-feedback">Ingresa el nombre del curso (mínimo 3 caracteres).</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Código *</label>
-                            <input type="text" name="codigo" class="form-control" required>
+                            <input type="text" name="codigo" class="form-control" pattern="^[A-Za-z0-9\-]{2,20}$" maxlength="20" required>
+                            <div class="invalid-feedback">Código inválido (letras, números y guiones).</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Créditos</label>
                             <input type="number" name="creditos" class="form-control" min="1" max="10">
+                            <div class="invalid-feedback">Entre 1 y 10.</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Ciclo</label>
                             <input type="number" name="ciclo" class="form-control" min="1" max="10">
+                            <div class="invalid-feedback">Entre 1 y 10.</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Horas</label>
-                            <input type="number" name="horas" class="form-control" min="1">
+                            <input type="number" name="horas" class="form-control" min="1" max="200">
+                            <div class="invalid-feedback">Debe ser mayor a 0.</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-accent btn-sm">
-                        <i class="bi bi-save me-1"></i> Guardar
-                    </button>
+                    <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-save me-1"></i>Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- ══ MODAL EDITAR ═════════════════════════════════════════ -->
+<!-- MODAL EDITAR -->
 <div class="modal fade" id="modalEditar" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Curso</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/cursos/actualizar}" method="post">
+            <form th:action="@{/cursos/actualizar}" method="post" id="formEditar" novalidate>
                 <input type="hidden" id="editId" name="id">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Nombre del Curso *</label>
-                            <input type="text" id="editNombre" name="nombre" class="form-control" required>
+                            <input type="text" id="editNombre" name="nombre" class="form-control" minlength="3" maxlength="150" required>
+                            <div class="invalid-feedback">Ingresa el nombre del curso.</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Código *</label>
-                            <input type="text" id="editCodigo" name="codigo" class="form-control" required>
+                            <input type="text" id="editCodigo" name="codigo" class="form-control" pattern="^[A-Za-z0-9\-]{2,20}$" maxlength="20" required>
+                            <div class="invalid-feedback">Código inválido.</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Créditos</label>
-                            <input type="number" id="editCreditos" name="creditos" class="form-control">
+                            <input type="number" id="editCreditos" name="creditos" class="form-control" min="1" max="10">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Ciclo</label>
-                            <input type="number" id="editCiclo" name="ciclo" class="form-control">
+                            <input type="number" id="editCiclo" name="ciclo" class="form-control" min="1" max="10">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <label class="form-label">Horas</label>
-                            <input type="number" id="editHoras" name="horas" class="form-control">
+                            <input type="number" id="editHoras" name="horas" class="form-control" min="1" max="200">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-accent btn-sm">
-                        <i class="bi bi-save me-1"></i> Actualizar
-                    </button>
+                    <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-save me-1"></i>Actualizar</button>
                 </div>
             </form>
         </div>
@@ -195,18 +164,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    document.getElementById('sidebarToggle').addEventListener('click', () => { sidebar.classList.add('sidebar-open'); overlay.classList.add('show'); });
+    overlay.addEventListener('click', () => { sidebar.classList.remove('sidebar-open'); overlay.classList.remove('show'); });
+
+    // Cargar editar
     function cargarEditar(id) {
-        fetch('/cursos/editar/' + id)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('editId').value       = data.id;
-                document.getElementById('editNombre').value   = data.nombre;
-                document.getElementById('editCodigo').value   = data.codigo;
-                document.getElementById('editCreditos').value = data.creditos || '';
-                document.getElementById('editCiclo').value    = data.ciclo || '';
-                document.getElementById('editHoras').value    = data.horas || '';
-            });
+        fetch('/cursos/editar/' + id).then(r => r.json()).then(data => {
+            document.getElementById('editId').value       = data.id;
+            document.getElementById('editNombre').value   = data.nombre;
+            document.getElementById('editCodigo').value   = data.codigo;
+            document.getElementById('editCreditos').value = data.creditos || '';
+            document.getElementById('editCiclo').value    = data.ciclo    || '';
+            document.getElementById('editHoras').value    = data.horas    || '';
+            document.getElementById('formEditar').classList.remove('was-validated');
+        });
     }
+
+    // Validación Bootstrap
+    ['formNuevo','formEditar'].forEach(fid => {
+        const form = document.getElementById(fid);
+        if (!form) return;
+        form.addEventListener('submit', e => { if (!form.checkValidity()) { e.preventDefault(); e.stopPropagation(); } form.classList.add('was-validated'); });
+        form.closest('.modal')?.addEventListener('hidden.bs.modal', () => form.classList.remove('was-validated'));
+    });
 </script>
 </body>
 </html>

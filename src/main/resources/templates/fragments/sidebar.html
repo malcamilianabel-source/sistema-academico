@@ -6,37 +6,32 @@
         <h5><i class="bi bi-mortarboard-fill me-2"></i>SistemaAcadémico</h5>
         <small>Gestión Académica</small>
     </div>
-
     <nav class="sidebar-nav">
         <div class="nav-section-label">Principal</div>
         <a th:href="@{/dashboard}" th:classappend="${paginaActual == 'dashboard'} ? 'active'" class="nav-link">
             <i class="bi bi-grid-1x2-fill"></i> Dashboard
         </a>
-
         <th:block th:if="${session.usuario.rol == 'ADMIN'}">
             <div class="nav-section-label mt-2">Gestión</div>
             <a th:href="@{/estudiantes}" th:classappend="${paginaActual == 'estudiantes'} ? 'active'" class="nav-link"><i class="bi bi-people-fill"></i> Estudiantes</a>
-            <a th:href="@{/docentes}" th:classappend="${paginaActual == 'docentes'} ? 'active'" class="nav-link"><i class="bi bi-person-workspace"></i> Docentes</a>
-            <a th:href="@{/cursos}" th:classappend="${paginaActual == 'cursos'} ? 'active'" class="nav-link"><i class="bi bi-book-fill"></i> Cursos</a>
-            <a th:href="@{/periodos}" th:classappend="${paginaActual == 'periodos'} ? 'active'" class="nav-link"><i class="bi bi-calendar3"></i> Periodos</a>
+            <a th:href="@{/docentes}"    th:classappend="${paginaActual == 'docentes'}    ? 'active'" class="nav-link"><i class="bi bi-person-workspace"></i> Docentes</a>
+            <a th:href="@{/cursos}"      th:classappend="${paginaActual == 'cursos'}      ? 'active'" class="nav-link"><i class="bi bi-book-fill"></i> Cursos</a>
+            <a th:href="@{/periodos}"    th:classappend="${paginaActual == 'periodos'}    ? 'active'" class="nav-link"><i class="bi bi-calendar3"></i> Periodos</a>
             <a th:href="@{/asignaciones}" th:classappend="${paginaActual == 'asignaciones'} ? 'active'" class="nav-link"><i class="bi bi-person-check-fill"></i> Asignaciones</a>
-            <a th:href="@{/matriculas}" th:classappend="${paginaActual == 'matriculas'} ? 'active'" class="nav-link"><i class="bi bi-journal-check"></i> Matrículas</a>
+            <a th:href="@{/matriculas}"  th:classappend="${paginaActual == 'matriculas'}  ? 'active'" class="nav-link"><i class="bi bi-journal-check"></i> Matrículas</a>
             <a th:href="@{/evaluaciones}" th:classappend="${paginaActual == 'evaluaciones'} ? 'active'" class="nav-link"><i class="bi bi-journal-text"></i> Calificaciones</a>
-
             <div class="nav-section-label mt-2">Administración</div>
             <a th:href="@{/usuarios}" th:classappend="${paginaActual == 'usuarios'} ? 'active'" class="nav-link"><i class="bi bi-person-gear"></i> Usuarios</a>
         </th:block>
-
         <th:block th:if="${session.usuario.rol == 'DOCENTE'}">
             <div class="nav-section-label mt-2">Académico</div>
-            <a th:href="@{/cursos}" th:classappend="${paginaActual == 'cursos'} ? 'active'" class="nav-link"><i class="bi bi-book-fill"></i> Cursos</a>
-            <a th:href="@{/periodos}" th:classappend="${paginaActual == 'periodos'} ? 'active'" class="nav-link"><i class="bi bi-calendar3"></i> Periodos</a>
+            <a th:href="@{/cursos}"      th:classappend="${paginaActual == 'cursos'}      ? 'active'" class="nav-link"><i class="bi bi-book-fill"></i> Cursos</a>
+            <a th:href="@{/periodos}"    th:classappend="${paginaActual == 'periodos'}    ? 'active'" class="nav-link"><i class="bi bi-calendar3"></i> Periodos</a>
             <a th:href="@{/asignaciones}" th:classappend="${paginaActual == 'asignaciones'} ? 'active'" class="nav-link"><i class="bi bi-person-check-fill"></i> Asignaciones</a>
-            <a th:href="@{/matriculas}" th:classappend="${paginaActual == 'matriculas'} ? 'active'" class="nav-link"><i class="bi bi-journal-check"></i> Matrículas</a>
+            <a th:href="@{/matriculas}"  th:classappend="${paginaActual == 'matriculas'}  ? 'active'" class="nav-link"><i class="bi bi-journal-check"></i> Matrículas</a>
             <a th:href="@{/evaluaciones}" th:classappend="${paginaActual == 'evaluaciones'} ? 'active'" class="nav-link"><i class="bi bi-journal-text"></i> Calificaciones</a>
         </th:block>
     </nav>
-
     <div class="sidebar-footer">
         <a th:href="@{/logout}"><i class="bi bi-box-arrow-left"></i> Cerrar sesión</a>
     </div>

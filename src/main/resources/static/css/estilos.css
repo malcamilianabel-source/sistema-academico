@@ -4,35 +4,33 @@
    ============================================================ */
 
 :root {
-    --color-sidebar:    #10232A;
-    --color-secondary:  #3D4D55;
-    --color-mid:        #A79E9C;
-    --color-light:      #D3C3B9;
-    --color-accent:     #B58863;
-    --color-dark:       #161616;
-    --sidebar-width:    260px;
+    --color-sidebar:   #10232A;
+    --color-secondary: #3D4D55;
+    --color-mid:       #A79E9C;
+    --color-light:     #D3C3B9;
+    --color-accent:    #B58863;
+    --color-dark:      #161616;
+    --sidebar-width:   260px;
 }
 
-/* ── BODY ───────────────────────────────────────────── */
+/* ── BODY ─────────────────────────────────────────────── */
 body {
     background-color: #f0ece8;
     font-family: 'Segoe UI', sans-serif;
     color: var(--color-dark);
 }
 
-/* ── SIDEBAR ────────────────────────────────────────── */
+/* ── SIDEBAR ──────────────────────────────────────────── */
 #sidebar {
     width: var(--sidebar-width);
     min-height: 100vh;
     background-color: var(--color-sidebar);
     position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
+    top: 0; left: 0;
+    z-index: 200;
     display: flex;
     flex-direction: column;
-    padding-top: 0;
-    transition: all 0.3s;
+    transition: transform 0.3s ease;
 }
 
 .sidebar-brand {
@@ -40,7 +38,6 @@ body {
     padding: 1.5rem 1.2rem;
     border-bottom: 2px solid var(--color-accent);
 }
-
 .sidebar-brand h5 {
     color: var(--color-accent);
     font-weight: 700;
@@ -48,16 +45,9 @@ body {
     margin: 0;
     letter-spacing: 0.5px;
 }
+.sidebar-brand small { color: var(--color-mid); font-size: 0.72rem; }
 
-.sidebar-brand small {
-    color: var(--color-mid);
-    font-size: 0.72rem;
-}
-
-.sidebar-nav {
-    padding: 1rem 0;
-    flex: 1;
-}
+.sidebar-nav { padding: 1rem 0; flex: 1; overflow-y: auto; }
 
 .nav-section-label {
     color: var(--color-mid);
@@ -71,39 +61,31 @@ body {
 .sidebar-nav .nav-link {
     color: var(--color-light);
     padding: 0.65rem 1.2rem;
-    border-radius: 0;
     font-size: 0.88rem;
     display: flex;
     align-items: center;
     gap: 0.7rem;
     transition: all 0.2s;
     border-left: 3px solid transparent;
+    text-decoration: none;
 }
-
 .sidebar-nav .nav-link:hover {
     background-color: var(--color-secondary);
     color: #fff;
     border-left-color: var(--color-accent);
 }
-
 .sidebar-nav .nav-link.active {
     background-color: var(--color-secondary);
     color: var(--color-accent);
     border-left-color: var(--color-accent);
     font-weight: 600;
 }
-
-.sidebar-nav .nav-link i {
-    font-size: 1rem;
-    width: 20px;
-    text-align: center;
-}
+.sidebar-nav .nav-link i { font-size: 1rem; width: 20px; text-align: center; }
 
 .sidebar-footer {
     padding: 1rem 1.2rem;
     border-top: 1px solid var(--color-secondary);
 }
-
 .sidebar-footer a {
     color: var(--color-mid);
     font-size: 0.82rem;
@@ -113,18 +95,26 @@ body {
     gap: 0.5rem;
     transition: color 0.2s;
 }
+.sidebar-footer a:hover { color: #fff; }
 
-.sidebar-footer a:hover {
-    color: #fff;
+/* ── OVERLAY (mobile) ─────────────────────────────────── */
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
 }
+#sidebar-overlay.show { display: block; }
 
-/* ── MAIN CONTENT ───────────────────────────────────── */
+/* ── MAIN CONTENT ─────────────────────────────────────── */
 #main-content {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
+    transition: margin-left 0.3s ease;
 }
 
-/* ── TOP NAVBAR ─────────────────────────────────────── */
+/* ── TOP NAVBAR ───────────────────────────────────────── */
 .top-navbar {
     background-color: #fff;
     border-bottom: 1px solid #e0d8d2;
@@ -135,90 +125,92 @@ body {
     position: sticky;
     top: 0;
     z-index: 99;
+    gap: 0.5rem;
 }
-
 .top-navbar .page-title {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--color-sidebar);
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Botón hamburguesa (solo mobile) */
+.btn-sidebar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--color-sidebar);
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .user-badge {
     background-color: var(--color-sidebar);
     color: var(--color-accent);
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    width: 36px; height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
-/* ── PAGE CONTENT ───────────────────────────────────── */
-.page-content {
-    padding: 1.8rem;
-}
+/* ── PAGE CONTENT ─────────────────────────────────────── */
+.page-content { padding: 1.5rem; }
 
-/* ── CARDS DASHBOARD ────────────────────────────────── */
+/* ── STAT CARDS ───────────────────────────────────────── */
 .stat-card {
     background-color: #fff;
     border: none;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    padding: 1.4rem 1.6rem;
+    padding: 1.2rem 1.4rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     transition: transform 0.2s;
 }
-
-.stat-card:hover {
-    transform: translateY(-2px);
-}
+.stat-card:hover { transform: translateY(-2px); }
 
 .stat-icon {
-    width: 52px;
-    height: 52px;
+    width: 48px; height: 48px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     flex-shrink: 0;
 }
-
 .stat-icon.estudiantes { background-color: #e8f4fd; color: #1565C0; }
 .stat-icon.docentes    { background-color: #f0faf0; color: #2E7D32; }
 .stat-icon.cursos      { background-color: #fff8e1; color: #F57F17; }
 .stat-icon.usuarios    { background-color: #fce4ec; color: #C62828; }
 
 .stat-info h3 {
-    font-size: 1.9rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--color-sidebar);
     margin: 0;
     line-height: 1;
 }
+.stat-info p { color: var(--color-mid); font-size: 0.82rem; margin: 0.2rem 0 0; }
 
-.stat-info p {
-    color: var(--color-mid);
-    font-size: 0.82rem;
-    margin: 0.2rem 0 0;
-}
-
-/* ── TABLES ─────────────────────────────────────────── */
+/* ── TABLA CONTAINER ──────────────────────────────────── */
 .tabla-container {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     overflow: hidden;
 }
-
 .tabla-header {
-    padding: 1.2rem 1.5rem;
+    padding: 1rem 1.2rem;
     border-bottom: 1px solid #f0ece8;
     display: flex;
     align-items: center;
@@ -226,42 +218,34 @@ body {
     flex-wrap: wrap;
     gap: 0.8rem;
 }
-
-.tabla-header h5 {
-    font-weight: 600;
-    color: var(--color-sidebar);
-    margin: 0;
-}
+.tabla-header h5 { font-weight: 600; color: var(--color-sidebar); margin: 0; }
 
 .table thead th {
     background-color: var(--color-sidebar);
     color: var(--color-light);
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     border: none;
-    padding: 0.85rem 1rem;
+    padding: 0.8rem 0.8rem;
+    white-space: nowrap;
 }
-
-.table tbody tr {
-    border-bottom: 1px solid #f5f0ec;
-    transition: background-color 0.15s;
-}
-
-.table tbody tr:hover {
-    background-color: #faf7f4;
-}
-
+.table tbody tr { border-bottom: 1px solid #f5f0ec; transition: background-color 0.15s; }
+.table tbody tr:hover { background-color: #faf7f4; }
 .table tbody td {
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 0.8rem;
     vertical-align: middle;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     color: var(--color-dark);
     border: none;
 }
 
-/* ── BUTTONS ─────────────────────────────────────────── */
+/* ── BUSCADOR RESPONSIVE ──────────────────────────────── */
+.search-form { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.search-form input { min-width: 0; width: 160px; }
+
+/* ── BUTTONS ──────────────────────────────────────────── */
 .btn-accent {
     background-color: var(--color-accent);
     border-color: var(--color-accent);
@@ -269,83 +253,127 @@ body {
     font-size: 0.85rem;
     font-weight: 500;
 }
-
-.btn-accent:hover {
-    background-color: #a07550;
-    border-color: #a07550;
-    color: #fff;
-}
+.btn-accent:hover { background-color: #a07550; border-color: #a07550; color: #fff; }
 
 .btn-edit {
     background-color: var(--color-secondary);
     border-color: var(--color-secondary);
     color: #fff;
-    font-size: 0.78rem;
-    padding: 0.3rem 0.65rem;
+    font-size: 0.75rem;
+    padding: 0.28rem 0.6rem;
 }
-
-.btn-edit:hover {
-    background-color: #2f3d45;
-    color: #fff;
-}
+.btn-edit:hover { background-color: #2f3d45; color: #fff; }
 
 .btn-delete {
     background-color: transparent;
     border-color: #dc3545;
     color: #dc3545;
-    font-size: 0.78rem;
-    padding: 0.3rem 0.65rem;
+    font-size: 0.75rem;
+    padding: 0.28rem 0.6rem;
 }
+.btn-delete:hover { background-color: #dc3545; color: #fff; }
 
-.btn-delete:hover {
-    background-color: #dc3545;
-    color: #fff;
-}
-
-/* ── MODALS ──────────────────────────────────────────── */
+/* ── MODALS ───────────────────────────────────────────── */
 .modal-header {
     background-color: var(--color-sidebar);
     color: #fff;
     border-bottom: 2px solid var(--color-accent);
 }
+.modal-header .btn-close { filter: invert(1); }
+.modal-title { font-size: 1rem; font-weight: 600; color: var(--color-light); }
 
-.modal-header .btn-close {
-    filter: invert(1);
-}
-
-.modal-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-light);
-}
-
-.form-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--color-secondary);
-    margin-bottom: 0.3rem;
-}
-
-.form-control:focus {
+.form-label { font-size: 0.82rem; font-weight: 600; color: var(--color-secondary); margin-bottom: 0.3rem; }
+.form-control:focus, .form-select:focus {
     border-color: var(--color-accent);
     box-shadow: 0 0 0 0.2rem rgba(181,136,99,0.2);
 }
 
-/* ── ALERTS ──────────────────────────────────────────── */
-.alert-success {
-    background-color: #f0faf0;
-    border-color: #c3e6cb;
-    color: #2E7D32;
-    font-size: 0.88rem;
+/* ── ALERTS ───────────────────────────────────────────── */
+.alert-success { background-color: #f0faf0; border-color: #c3e6cb; color: #2E7D32; font-size: 0.88rem; }
+.alert-danger  { background-color: #fdf0f0; border-color: #f5c6cb; color: #721c24; font-size: 0.88rem; }
+
+/* ── BADGES ROL ───────────────────────────────────────── */
+.badge-admin    { background-color: var(--color-accent);    color: #fff; }
+.badge-docente  { background-color: var(--color-secondary); color: #fff; }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE — Mobile first
+   ══════════════════════════════════════════════════════ */
+
+/* Tablets y móviles (< 992px) */
+@media (max-width: 991.98px) {
+
+    /* Sidebar oculto fuera de pantalla por defecto */
+    #sidebar {
+        transform: translateX(-100%);
+        width: 260px;
+        min-height: 100vh;
+        position: fixed;
+    }
+
+    /* Sidebar visible cuando tiene clase .sidebar-open */
+    #sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    /* El contenido ocupa todo el ancho */
+    #main-content {
+        margin-left: 0 !important;
+    }
+
+    /* Mostrar botón hamburguesa */
+    .btn-sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Tabla: texto más pequeño en móvil */
+    .table thead th,
+    .table tbody td {
+        font-size: 0.75rem;
+        padding: 0.6rem 0.5rem;
+    }
+
+    /* Ocultar columnas menos importantes en móvil */
+    .col-hide-sm { display: none; }
+
+    /* Page content: menos padding */
+    .page-content { padding: 1rem; }
+
+    /* Top navbar: ajustar */
+    .top-navbar { padding: 0.65rem 1rem; }
+    .top-navbar .page-title { font-size: 0.95rem; }
+
+    /* Buscador: input ocupa más espacio */
+    .search-form input { width: 130px; }
+
+    /* Stat cards: 2 columnas en tablet */
+    .stat-card { padding: 1rem; }
+    .stat-info h3 { font-size: 1.5rem; }
 }
 
-/* ── BADGE ROL ───────────────────────────────────────── */
-.badge-admin     { background-color: var(--color-accent); color: #fff; }
-.badge-docente   { background-color: var(--color-secondary); color: #fff; }
-.badge-estudiant { background-color: #e8f4fd; color: #1565C0; }
+/* Móviles pequeños (< 576px) */
+@media (max-width: 575.98px) {
 
-/* ── RESPONSIVE ──────────────────────────────────────── */
-@media (max-width: 768px) {
-    #sidebar { width: 100%; min-height: auto; position: relative; }
-    #main-content { margin-left: 0; }
+    .page-content { padding: 0.75rem; }
+
+    /* Stat cards: texto más pequeño */
+    .stat-info h3 { font-size: 1.3rem; }
+    .stat-icon { width: 40px; height: 40px; font-size: 1.1rem; }
+
+    /* tabla-header en columna */
+    .tabla-header { flex-direction: column; align-items: flex-start; }
+
+    /* Buscador ocupa todo el ancho */
+    .search-form { width: 100%; }
+    .search-form input { flex: 1; width: auto; }
+
+    /* Modales: full width */
+    .modal-dialog { margin: 0.5rem; }
+
+    /* Nombre usuario: ocultar en móvil muy pequeño */
+    .user-name-sm { display: none; }
+
+    /* Top navbar title aún más pequeño */
+    .top-navbar .page-title { font-size: 0.85rem; }
 }

@@ -10,14 +10,14 @@
 </head>
 <body>
 
+<div id="sidebar-overlay"></div>
 <div class="d-flex">
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
 
     <div id="main-content" class="flex-grow-1">
 
-        <!-- TOP NAVBAR -->
         <div class="top-navbar">
-            <h1 class="page-title"><i class="bi bi-people-fill me-2"></i>Estudiantes</h1>
+            <div class="d-flex align-items-center gap-2"><button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button><h1 class="page-title"><i class="bi bi-people-fill me-2"></i>Estudiantes</h1></div>
             <div class="d-flex align-items-center gap-2">
                 <span style="font-size:0.85rem; color:#3D4D55;"
                       th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
@@ -33,25 +33,23 @@
                 <i class="bi bi-check-circle-fill"></i>
                 <span th:text="${mensaje}"></span>
             </div>
+            <!-- ALERTA ERROR (DNI/email duplicado) -->
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span th:text="${error}"></span>
+            </div>
 
-            <!-- TABLA -->
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-people-fill me-2" style="color:#B58863;"></i>Lista de Estudiantes</h5>
                     <div class="d-flex gap-2 flex-wrap">
-                        <!-- BUSCADOR -->
                         <form th:action="@{/estudiantes}" method="get" class="d-flex gap-2">
                             <input type="text" name="buscar" class="form-control form-control-sm"
                                    placeholder="Buscar por nombre..." style="width:200px;"
                                    th:value="${buscar}">
-                            <button type="submit" class="btn btn-sm btn-accent">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <a th:href="@{/estudiantes}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-x"></i>
-                            </a>
+                            <button type="submit" class="btn btn-sm btn-accent"><i class="bi bi-search"></i></button>
+                            <a th:href="@{/estudiantes}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x"></i></a>
                         </form>
-                        <!-- BOTÓN NUEVO -->
                         <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo">
                             <i class="bi bi-plus-lg me-1"></i> Nuevo Estudiante
                         </button>
@@ -62,14 +60,8 @@
                     <table class="table mb-0">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Nombre</th>
-                                <th>Apellido</th>
-                                <th>DNI</th>
-                                <th>Email</th>
-                                <th>Teléfono</th>
-                                <th>F. Inscripción</th>
-                                <th>Acciones</th>
+                                <th>#</th><th>Nombre</th><th>Apellido</th><th>DNI</th>
+                                <th>Email</th><th>Teléfono</th><th>F. Inscripción</th><th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -96,8 +88,7 @@
                             </tr>
                             <tr th:if="${#lists.isEmpty(estudiantes)}">
                                 <td colspan="8" class="text-center py-4" style="color:#A79E9C;">
-                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    No se encontraron estudiantes.
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>No se encontraron estudiantes.
                                 </td>
                             </tr>
                         </tbody>
@@ -116,29 +107,54 @@
                 <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nuevo Estudiante</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/estudiantes/guardar}" method="post">
+            <form th:action="@{/estudiantes/guardar}" method="post" id="formNuevo" novalidate>
                 <div class="modal-body">
                     <div class="row g-3">
+
                         <div class="col-md-6">
                             <label class="form-label">Nombre *</label>
-                            <input type="text" name="nombre" class="form-control" required>
+                            <input type="text" name="nombre" id="nNombre" class="form-control"
+                                   pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
+                                   title="Solo se permiten letras y espacios."
+                                   required>
+                            <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
+                        <!-- Apellido: solo letras y espacios -->
                         <div class="col-md-6">
                             <label class="form-label">Apellido *</label>
-                            <input type="text" name="apellido" class="form-control" required>
+                            <input type="text" name="apellido" id="nApellido" class="form-control"
+                                   pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
+                                   title="Solo se permiten letras y espacios."
+                                   required>
+                            <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
+                        <!-- DNI: exactamente 8 dígitos -->
                         <div class="col-md-6">
-                            <label class="form-label">DNI *</label>
-                            <input type="text" name="dni" class="form-control" maxlength="20" required>
+                            <label class="form-label">DNI * <small class="text-muted">(8 dígitos)</small></label>
+                            <input type="text" name="dni" id="nDni" class="form-control"
+                                   pattern="^\d{8}$" maxlength="8"
+                                   title="El DNI debe tener exactamente 8 dígitos numéricos."
+                                   required>
+                            <div class="invalid-feedback">El DNI debe tener exactamente 8 dígitos numéricos.</div>
                         </div>
+                        <!-- Email: debe terminar en @academico.com -->
                         <div class="col-md-6">
-                            <label class="form-label">Email *</label>
-                            <input type="email" name="email" class="form-control" required>
+                            <label class="form-label">Email * <small class="text-muted">(@academico.com)</small></label>
+                            <input type="email" name="email" id="nEmail" class="form-control"
+                                   pattern="^[a-zA-Z0-9._%+\-]+@academico\.com$"
+                                   title="El email debe terminar en @academico.com"
+                                   required>
+                            <div class="invalid-feedback">El email debe tener el formato nombre@academico.com</div>
                         </div>
+                        <!-- Teléfono: exactamente 9 dígitos -->
                         <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" name="telefono" class="form-control">
+                            <label class="form-label">Teléfono <small class="text-muted">(9 dígitos)</small></label>
+                            <input type="text" name="telefono" id="nTelefono" class="form-control"
+                                   pattern="^\d{9}$" maxlength="9"
+                                   title="El teléfono debe tener exactamente 9 dígitos numéricos.">
+                            <div class="invalid-feedback">El teléfono debe tener exactamente 9 dígitos numéricos.</div>
                         </div>
+                        <!-- Fecha -->
                         <div class="col-md-6">
                             <label class="form-label">Fecha de Inscripción</label>
                             <input type="date" name="fechaInscripcion" class="form-control">
@@ -164,29 +180,44 @@
                 <h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Estudiante</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/estudiantes/actualizar}" method="post">
+            <form th:action="@{/estudiantes/actualizar}" method="post" id="formEditar" novalidate>
                 <input type="hidden" id="editId" name="id">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre *</label>
-                            <input type="text" id="editNombre" name="nombre" class="form-control" required>
+                            <input type="text" id="editNombre" name="nombre" class="form-control"
+                                   pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
+                                   title="Solo se permiten letras y espacios." required>
+                            <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Apellido *</label>
-                            <input type="text" id="editApellido" name="apellido" class="form-control" required>
+                            <input type="text" id="editApellido" name="apellido" class="form-control"
+                                   pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
+                                   title="Solo se permiten letras y espacios." required>
+                            <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">DNI *</label>
-                            <input type="text" id="editDni" name="dni" class="form-control" maxlength="20" required>
+                            <label class="form-label">DNI * <small class="text-muted">(8 dígitos)</small></label>
+                            <input type="text" id="editDni" name="dni" class="form-control"
+                                   pattern="^\d{8}$" maxlength="8"
+                                   title="El DNI debe tener exactamente 8 dígitos numéricos." required>
+                            <div class="invalid-feedback">El DNI debe tener exactamente 8 dígitos numéricos.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email *</label>
-                            <input type="email" id="editEmail" name="email" class="form-control" required>
+                            <label class="form-label">Email * <small class="text-muted">(@academico.com)</small></label>
+                            <input type="email" id="editEmail" name="email" class="form-control"
+                                   pattern="^[a-zA-Z0-9._%+\-]+@academico\.com$"
+                                   title="El email debe terminar en @academico.com" required>
+                            <div class="invalid-feedback">El email debe tener el formato nombre@academico.com</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" id="editTelefono" name="telefono" class="form-control">
+                            <label class="form-label">Teléfono <small class="text-muted">(9 dígitos)</small></label>
+                            <input type="text" id="editTelefono" name="telefono" class="form-control"
+                                   pattern="^\d{9}$" maxlength="9"
+                                   title="El teléfono debe tener exactamente 9 dígitos numéricos.">
+                            <div class="invalid-feedback">El teléfono debe tener exactamente 9 dígitos numéricos.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Fecha de Inscripción</label>
@@ -207,6 +238,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // ── Cargar datos al modal editar ──
     function cargarEditar(id) {
         fetch('/estudiantes/editar/' + id)
             .then(res => res.json())
@@ -218,8 +250,35 @@
                 document.getElementById('editEmail').value            = data.email;
                 document.getElementById('editTelefono').value         = data.telefono || '';
                 document.getElementById('editFechaInscripcion').value = data.fechaInscripcion || '';
+                // Reset validación visual al abrir
+                document.getElementById('formEditar').classList.remove('was-validated');
             });
     }
+
+    // ── Bloquear letras en DNI y Teléfono en tiempo real ──
+    function soloNumeros(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    }
+    document.querySelectorAll('#nDni, #nTelefono, #editDni, #editTelefono')
+        .forEach(el => el.addEventListener('input', soloNumeros));
+
+    // ── Validación Bootstrap al enviar ──
+    ['formNuevo', 'formEditar'].forEach(fid => {
+        const form = document.getElementById(fid);
+        if (!form) return;
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+<script>
+    const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
+    if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
+    if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
 </script>
 </body>
 </html>

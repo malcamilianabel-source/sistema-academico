@@ -37,4 +37,27 @@ public class EstudianteService {
     public long contarTotal() {
         return estudianteRepository.count();
     }
+
+    /**
+     * Verifica si ya existe un estudiante con ese DNI,
+     * excluyendo el registro con excludeId (útil para edición).
+     * Si excludeId es null, verifica sin excluir ninguno (útil para creación).
+     */
+    public boolean existeDni(String dni, Long excludeId) {
+        Optional<Estudiante> existente = estudianteRepository.findByDni(dni);
+        if (existente.isEmpty()) return false;
+        if (excludeId == null) return true;
+        return !existente.get().getId().equals(excludeId);
+    }
+
+    /**
+     * Verifica si ya existe un estudiante con ese email,
+     * excluyendo el registro con excludeId.
+     */
+    public boolean existeEmail(String email, Long excludeId) {
+        Optional<Estudiante> existente = estudianteRepository.findByEmail(email);
+        if (existente.isEmpty()) return false;
+        if (excludeId == null) return true;
+        return !existente.get().getId().equals(excludeId);
+    }
 }

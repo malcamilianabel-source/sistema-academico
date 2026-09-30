@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/estudiantes")
@@ -41,13 +40,26 @@ public class EstudianteController {
     // ── CREAR ────────────────────────────────────────────────
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Estudiante estudiante,
-                          RedirectAttributes redirectAttributes) {
+                          RedirectAttributes ra) {
+        // Validar DNI duplicado
+        if (estudianteService.existeDni(estudiante.getDni(), null)) {
+            ra.addFlashAttribute("error",
+                    "Ya existe un estudiante con el DNI " + estudiante.getDni() + ".");
+            return "redirect:/estudiantes";
+        }
+        // Validar Email duplicado
+        if (estudianteService.existeEmail(estudiante.getEmail(), null)) {
+            ra.addFlashAttribute("error",
+                    "Ya existe un estudiante con ese email.");
+            return "redirect:/estudiantes";
+        }
         estudianteService.guardar(estudiante);
-        redirectAttributes.addFlashAttribute("mensaje", "Estudiante guardado correctamente.");
+        ra.addFlashAttribute("mensaje",
+                "Estudiante guardado correctamente.");
         return "redirect:/estudiantes";
     }
 
-    // ── EDITAR (cargar datos al modal via JSON) ──────────────
+    // ── EDITAR (JSON para el modal) ──────────────────────────
     @GetMapping("/editar/{id}")
     @ResponseBody
     public Estudiante obtenerParaEditar(@PathVariable Long id) {
@@ -57,6 +69,16 @@ public class EstudianteController {
     // ── ACTUALIZAR ───────────────────────────────────────────
     @PostMapping("/actualizar")
     public String actualizar(@ModelAttribute Estudiante form, RedirectAttributes ra) {
+        // Validar DNI duplicado (excluyendo el propio registro)
+        if (estudianteService.existeDni(form.getDni(), form.getId())) {
+            ra.addFlashAttribute("error", "Ya existe otro estudiante con el DNI " + form.getDni() + ".");
+            return "redirect:/estudiantes";
+        }
+        // Validar Email duplicado (excluyendo el propio registro)
+        if (estudianteService.existeEmail(form.getEmail(), form.getId())) {
+            ra.addFlashAttribute("error", "Ya existe otro estudiante con ese email.");
+            return "redirect:/estudiantes";
+        }
         Estudiante e = estudianteService.buscarPorId(form.getId()).orElseThrow();
         e.setNombre(form.getNombre());
         e.setApellido(form.getApellido());
@@ -71,10 +93,9 @@ public class EstudianteController {
 
     // ── ELIMINAR ─────────────────────────────────────────────
     @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id,
-                           RedirectAttributes redirectAttributes) {
+    public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         estudianteService.eliminar(id);
-        redirectAttributes.addFlashAttribute("mensaje", "Estudiante eliminado correctamente.");
+        ra.addFlashAttribute("mensaje", "Estudiante eliminado correctamente.");
         return "redirect:/estudiantes";
     }
 }
