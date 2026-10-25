@@ -2,6 +2,7 @@ package com.academic.service;
 
 import com.academic.model.Docente;
 import com.academic.repository.DocenteRepository;
+import com.academic.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -12,6 +13,9 @@ public class DocenteService {
 
     @Autowired
     private DocenteRepository docenteRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     public List<Docente> listarTodos() {
         return docenteRepository.findAll();
@@ -26,7 +30,24 @@ public class DocenteService {
         return docenteRepository.findById(id);
     }
 
+    public Optional<Docente> buscarPorUsuario(Long usuarioId) {
+        return docenteRepository.findByUsuarioId(usuarioId);
+    }
+
     public Docente guardar(Docente docente) {
+        Validaciones.persona(docente.getNombre(), docente.getApellido(), docente.getDni(),
+                docente.getEmail(), docente.getTelefono());
+        String especialidad = docente.getEspecialidad();
+        Validaciones.exigir(especialidad == null || especialidad.length() <= 150,
+                "La especialidad no puede superar los 150 caracteres.");
+
+        // Se enlaza con el usuario DOCENTE que tenga el mismo email, si aún está libre
+        if (docente.getUsuario() == null) {
+            usuarioRepository.findByEmail(docente.getEmail())
+                    .filter(u -> "DOCENTE".equals(u.getRol()))
+                    .filter(u -> docenteRepository.findByUsuarioId(u.getId()).isEmpty())
+                    .ifPresent(docente::setUsuario);
+        }
         return docenteRepository.save(docente);
     }
 

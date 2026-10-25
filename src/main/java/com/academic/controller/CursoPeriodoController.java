@@ -7,6 +7,7 @@ import com.academic.service.DocenteService;
 import com.academic.service.PeriodoAcademicoService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,10 @@ public class CursoPeriodoController {
                           @RequestParam Long docenteId,
                           @RequestParam Long periodoId,
                           RedirectAttributes ra) {
+        if (cursoPeriodoService.existeAsignacion(cursoId, docenteId, periodoId, null)) {
+            ra.addFlashAttribute("error", "Ese curso ya está asignado a ese docente en ese periodo.");
+            return "redirect:/asignaciones";
+        }
         CursoPeriodo cp = new CursoPeriodo();
         cp.setCurso(cursoService.buscarPorId(cursoId).orElseThrow());
         cp.setDocente(docenteService.buscarPorId(docenteId).orElseThrow());
@@ -58,6 +63,10 @@ public class CursoPeriodoController {
                              @RequestParam Long docenteId,
                              @RequestParam Long periodoId,
                              RedirectAttributes ra) {
+        if (cursoPeriodoService.existeAsignacion(cursoId, docenteId, periodoId, id)) {
+            ra.addFlashAttribute("error", "Ese curso ya está asignado a ese docente en ese periodo.");
+            return "redirect:/asignaciones";
+        }
         CursoPeriodo cp = cursoPeriodoService.buscarPorId(id).orElseThrow();
         cp.setCurso(cursoService.buscarPorId(cursoId).orElseThrow());
         cp.setDocente(docenteService.buscarPorId(docenteId).orElseThrow());
@@ -67,10 +76,15 @@ public class CursoPeriodoController {
         return "redirect:/asignaciones";
     }
 
-    @GetMapping("/eliminar/{id}")
+    @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
-        cursoPeriodoService.eliminar(id);
-        ra.addFlashAttribute("mensaje", "Asignación eliminada correctamente.");
+        try {
+            cursoPeriodoService.eliminar(id);
+            ra.addFlashAttribute("mensaje", "Asignación eliminada correctamente.");
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("error",
+                    "No se puede eliminar la asignación porque tiene matrículas registradas.");
+        }
         return "redirect:/asignaciones";
     }
 }

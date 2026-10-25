@@ -35,7 +35,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if ("DOCENTE".equals(rol)) {
-            if (path.equals("/dashboard") || path.equals("/logout") || path.startsWith("/evaluaciones")) {
+            if (path.equals("/dashboard") || path.equals("/logout") || path.startsWith("/evaluaciones")
+                    || path.startsWith("/asistencias")) {
+                return true;
+            }
+            if (path.equals("/sesiones") && "GET".equalsIgnoreCase(method)) {
                 return true;
             }
             if ((path.startsWith("/cursos") || path.startsWith("/periodos")
@@ -47,7 +51,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if ("ESTUDIANTE".equals(rol)) {
-            if (path.equals("/dashboard") || path.equals("/logout")) {
+            if (path.equals("/dashboard") || path.equals("/logout") || path.equals("/historial")) {
                 return true;
             }
             return denegar(response);

@@ -3,9 +3,12 @@ package com.academic.controller;
 import com.academic.model.Estudiante;
 import com.academic.service.EstudianteService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -32,15 +35,17 @@ public class EstudianteController {
             lista = estudianteService.listarTodos();
         }
         model.addAttribute("estudiantes", lista);
-        model.addAttribute("nuevoEstudiante", new Estudiante());
-        model.addAttribute("paginaActual", "estudiantes");
-        return "estudiantes/lista";
+        return vistaLista(model, null);
     }
 
-    // ── CREAR ────────────────────────────────────────────────
+    // ── CREAR  ────────────────────────────────────────────────
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Estudiante estudiante,
-                          RedirectAttributes ra) {
+    public String guardar(@Valid @ModelAttribute Estudiante estudiante, BindingResult result,
+                          Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            model.addAttribute("estudiantes", estudianteService.listarTodos());
+            return vistaLista(model, "modalNuevo");
+        }
         // Validar DNI duplicado
         if (estudianteService.existeDni(estudiante.getDni(), null)) {
             ra.addFlashAttribute("error",
@@ -53,9 +58,13 @@ public class EstudianteController {
                     "Ya existe un estudiante con ese email.");
             return "redirect:/estudiantes";
         }
-        estudianteService.guardar(estudiante);
-        ra.addFlashAttribute("mensaje",
-                "Estudiante guardado correctamente.");
+        try {
+            estudianteService.guardar(estudiante);
+            ra.addFlashAttribute("mensaje",
+                    "Estudiante guardado correctamente.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/estudiantes";
     }
 
@@ -68,7 +77,12 @@ public class EstudianteController {
 
     // ── ACTUALIZAR ───────────────────────────────────────────
     @PostMapping("/actualizar")
-    public String actualizar(@ModelAttribute Estudiante form, RedirectAttributes ra) {
+    public String actualizar(@Valid @ModelAttribute("estudianteEditar") Estudiante form, BindingResult result,
+                             Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            model.addAttribute("estudiantes", estudianteService.listarTodos());
+            return vistaLista(model, "modalEditar");
+        }
         // Validar DNI duplicado (excluyendo el propio registro)
         if (estudianteService.existeDni(form.getDni(), form.getId())) {
             ra.addFlashAttribute("error", "Ya existe otro estudiante con el DNI " + form.getDni() + ".");
@@ -86,16 +100,34 @@ public class EstudianteController {
         e.setEmail(form.getEmail());
         e.setTelefono(form.getTelefono());
         e.setFechaInscripcion(form.getFechaInscripcion());
-        estudianteService.guardar(e);
-        ra.addFlashAttribute("mensaje", "Estudiante actualizado correctamente.");
+        try {
+            estudianteService.guardar(e);
+            ra.addFlashAttribute("mensaje", "Estudiante actualizado correctamente.");
+        } catch (IllegalArgumentException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        }
         return "redirect:/estudiantes";
     }
 
     // ── ELIMINAR ─────────────────────────────────────────────
-    @GetMapping("/eliminar/{id}")
+    @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
-        estudianteService.eliminar(id);
-        ra.addFlashAttribute("mensaje", "Estudiante eliminado correctamente.");
+        try {
+            estudianteService.eliminar(id);
+            ra.addFlashAttribute("mensaje", "Estudiante eliminado correctamente.");
+        } catch (DataIntegrityViolationException ex) {
+            ra.addFlashAttribute("error",
+                    "No se puede eliminar el estudiante porque tiene matrículas registradas.");
+        }
         return "redirect:/estudiantes";
+    }
+
+    /** Completa el modelo de la lista; si viene de un formulario con errores, reabre su modal. */
+    private String vistaLista(Model model, String abrirModal) {
+        if (!model.containsAttribute("estudiante")) model.addAttribute("estudiante", new Estudiante());
+        if (!model.containsAttribute("estudianteEditar")) model.addAttribute("estudianteEditar", new Estudiante());
+        model.addAttribute("abrirModal", abrirModal);
+        model.addAttribute("paginaActual", "estudiantes");
+        return "estudiantes/lista";
     }
 }

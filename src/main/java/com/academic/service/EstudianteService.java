@@ -2,6 +2,7 @@ package com.academic.service;
 
 import com.academic.model.Estudiante;
 import com.academic.repository.EstudianteRepository;
+import com.academic.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -12,6 +13,9 @@ public class EstudianteService {
 
     @Autowired
     private EstudianteRepository estudianteRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     public List<Estudiante> listarTodos() {
         return estudianteRepository.findAll();
@@ -26,7 +30,21 @@ public class EstudianteService {
         return estudianteRepository.findById(id);
     }
 
+    public Optional<Estudiante> buscarPorUsuario(Long usuarioId) {
+        return estudianteRepository.findByUsuarioId(usuarioId);
+    }
+
     public Estudiante guardar(Estudiante estudiante) {
+        Validaciones.persona(estudiante.getNombre(), estudiante.getApellido(), estudiante.getDni(),
+                estudiante.getEmail(), estudiante.getTelefono());
+
+        // Se enlaza con el usuario ESTUDIANTE que tenga el mismo email, si aún está libre
+        if (estudiante.getUsuario() == null) {
+            usuarioRepository.findByEmail(estudiante.getEmail())
+                    .filter(u -> "ESTUDIANTE".equals(u.getRol()))
+                    .filter(u -> estudianteRepository.findByUsuarioId(u.getId()).isEmpty())
+                    .ifPresent(estudiante::setUsuario);
+        }
         return estudianteRepository.save(estudiante);
     }
 

@@ -77,11 +77,13 @@
                                             data-bs-toggle="modal" data-bs-target="#modalEditar">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>
-                                    <a th:href="@{/docentes/eliminar/{id}(id=${d.id})}"
-                                       class="btn btn-delete btn-sm"
-                                       onclick="return confirm('¿Eliminar este docente?')">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </a>
+                                    <form th:action="@{/docentes/eliminar/{id}(id=${d.id})}" method="post"
+                                          class="d-inline"
+                                          onsubmit="return confirm('¿Eliminar este docente?')">
+                                        <button type="submit" class="btn btn-delete btn-sm">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(docentes)}">
@@ -105,47 +107,53 @@
                 <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nuevo Docente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/docentes/guardar}" method="post" id="formNuevo" novalidate>
+            <form th:action="@{/docentes/guardar}" th:object="${docente}" method="post" id="formNuevo" novalidate>
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre *</label>
-                            <input type="text" name="nombre" id="nNombre" class="form-control"
+                            <input type="text" th:field="*{nombre}" id="nNombre" class="form-control"
                                    pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
                                    title="Solo se permiten letras y espacios." required>
+                            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
                             <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Apellido *</label>
-                            <input type="text" name="apellido" id="nApellido" class="form-control"
+                            <input type="text" th:field="*{apellido}" id="nApellido" class="form-control"
                                    pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
                                    title="Solo se permiten letras y espacios." required>
+                            <span th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}" class="text-danger small"></span>
                             <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">DNI * <small class="text-muted">(8 dígitos)</small></label>
-                            <input type="text" name="dni" id="nDni" class="form-control"
+                            <input type="text" th:field="*{dni}" id="nDni" class="form-control"
                                    pattern="^\d{8}$" maxlength="8"
                                    title="El DNI debe tener exactamente 8 dígitos numéricos." required>
+                            <span th:if="${#fields.hasErrors('dni')}" th:errors="*{dni}" class="text-danger small"></span>
                             <div class="invalid-feedback">El DNI debe tener exactamente 8 dígitos numéricos.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email * <small class="text-muted">(@academico.com)</small></label>
-                            <input type="email" name="email" id="nEmail" class="form-control"
+                            <input type="email" th:field="*{email}" id="nEmail" class="form-control"
                                    pattern="^[a-zA-Z0-9._%+\-]+@academico\.com$"
                                    title="El email debe terminar en @academico.com" required>
+                            <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-danger small"></span>
                             <div class="invalid-feedback">El email debe tener el formato nombre@academico.com</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Teléfono <small class="text-muted">(9 dígitos)</small></label>
-                            <input type="text" name="telefono" id="nTelefono" class="form-control"
+                            <input type="text" th:field="*{telefono}" id="nTelefono" class="form-control"
                                    pattern="^\d{9}$" maxlength="9"
                                    title="El teléfono debe tener exactamente 9 dígitos numéricos.">
+                            <span th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}" class="text-danger small"></span>
                             <div class="invalid-feedback">El teléfono debe tener exactamente 9 dígitos numéricos.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Especialidad</label>
-                            <input type="text" name="especialidad" class="form-control">
+                            <input type="text" th:field="*{especialidad}" class="form-control">
+                            <span th:if="${#fields.hasErrors('especialidad')}" th:errors="*{especialidad}" class="text-danger small"></span>
                         </div>
                     </div>
                 </div>
@@ -168,48 +176,54 @@
                 <h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Docente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{/docentes/actualizar}" method="post" id="formEditar" novalidate>
-                <input type="hidden" id="editId" name="id">
+            <form th:action="@{/docentes/actualizar}" th:object="${docenteEditar}" method="post" id="formEditar" novalidate>
+                <input type="hidden" id="editId" th:field="*{id}">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre *</label>
-                            <input type="text" id="editNombre" name="nombre" class="form-control"
+                            <input type="text" id="editNombre" th:field="*{nombre}" class="form-control"
                                    pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
                                    title="Solo se permiten letras y espacios." required>
+                            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
                             <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Apellido *</label>
-                            <input type="text" id="editApellido" name="apellido" class="form-control"
+                            <input type="text" id="editApellido" th:field="*{apellido}" class="form-control"
                                    pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$"
                                    title="Solo se permiten letras y espacios." required>
+                            <span th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}" class="text-danger small"></span>
                             <div class="invalid-feedback">Solo se permiten letras y espacios.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">DNI * <small class="text-muted">(8 dígitos)</small></label>
-                            <input type="text" id="editDni" name="dni" class="form-control"
+                            <input type="text" id="editDni" th:field="*{dni}" class="form-control"
                                    pattern="^\d{8}$" maxlength="8"
                                    title="El DNI debe tener exactamente 8 dígitos numéricos." required>
+                            <span th:if="${#fields.hasErrors('dni')}" th:errors="*{dni}" class="text-danger small"></span>
                             <div class="invalid-feedback">El DNI debe tener exactamente 8 dígitos numéricos.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email * <small class="text-muted">(@academico.com)</small></label>
-                            <input type="email" id="editEmail" name="email" class="form-control"
+                            <input type="email" id="editEmail" th:field="*{email}" class="form-control"
                                    pattern="^[a-zA-Z0-9._%+\-]+@academico\.com$"
                                    title="El email debe terminar en @academico.com" required>
+                            <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-danger small"></span>
                             <div class="invalid-feedback">El email debe tener el formato nombre@academico.com</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Teléfono <small class="text-muted">(9 dígitos)</small></label>
-                            <input type="text" id="editTelefono" name="telefono" class="form-control"
+                            <input type="text" id="editTelefono" th:field="*{telefono}" class="form-control"
                                    pattern="^\d{9}$" maxlength="9"
                                    title="El teléfono debe tener exactamente 9 dígitos numéricos.">
+                            <span th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}" class="text-danger small"></span>
                             <div class="invalid-feedback">El teléfono debe tener exactamente 9 dígitos numéricos.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Especialidad</label>
-                            <input type="text" id="editEspecialidad" name="especialidad" class="form-control">
+                            <input type="text" id="editEspecialidad" th:field="*{especialidad}" class="form-control">
+                            <span th:if="${#fields.hasErrors('especialidad')}" th:errors="*{especialidad}" class="text-danger small"></span>
                         </div>
                     </div>
                 </div>
@@ -263,6 +277,11 @@
     const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
     if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
     if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
+</script>
+<script th:inline="javascript">
+    // Si el servidor rechazó un formulario (@Valid), se vuelve a abrir su modal con los errores
+    const abrirModal = /*[[${abrirModal}]]*/ null;
+    if (abrirModal) new bootstrap.Modal(document.getElementById(abrirModal)).show();
 </script>
 </body>
 </html>

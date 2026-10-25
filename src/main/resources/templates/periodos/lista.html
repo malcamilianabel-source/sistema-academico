@@ -24,21 +24,22 @@
         </div>
         <div class="page-content">
             <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span></div>
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-calendar3 me-2" style="color:#B58863;"></i>Lista de Periodos</h5>
-                    <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo"><i class="bi bi-plus-lg me-1"></i> Nuevo Periodo</button>
+                    <button th:if="${session.usuario.rol == 'ADMIN'}" class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo"><i class="bi bi-plus-lg me-1"></i> Nuevo Periodo</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table mb-0">
-                        <thead><tr><th>#</th><th>Nombre</th><th class="col-hide-sm">Fecha Inicio</th><th class="col-hide-sm">Fecha Fin</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>#</th><th>Nombre</th><th class="col-hide-sm">Fecha Inicio</th><th class="col-hide-sm">Fecha Fin</th><th th:if="${session.usuario.rol == 'ADMIN'}">Acciones</th></tr></thead>
                         <tbody>
                         <tr th:each="p, stat : ${periodos}">
                             <td th:text="${stat.count}"></td><td th:text="${p.nombre}"></td>
                             <td class="col-hide-sm" th:text="${p.fechaInicio}"></td><td class="col-hide-sm" th:text="${p.fechaFin}"></td>
-                            <td>
+                            <td th:if="${session.usuario.rol == 'ADMIN'}">
                                 <button class="btn btn-edit btn-sm me-1" th:onclick="'cargarEditar(' + ${p.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar"><i class="bi bi-pencil-fill"></i></button>
-                                <a th:href="@{/periodos/eliminar/{id}(id=${p.id})}" class="btn btn-delete btn-sm" onclick="return confirm('¿Eliminar este periodo?')"><i class="bi bi-trash-fill"></i></a>
+                                <form th:action="@{/periodos/eliminar/{id}(id=${p.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este periodo?')"><button type="submit" class="btn btn-delete btn-sm"><i class="bi bi-trash-fill"></i></button></form>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(periodos)}"><td colspan="5" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No se encontraron periodos.</td></tr>
@@ -50,15 +51,18 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Nuevo Periodo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/periodos/guardar}" method="post" id="formNuevo" novalidate><div class="modal-body">
+    <form th:action="@{/periodos/guardar}" th:object="${periodo}" method="post" id="formNuevo" novalidate><div class="modal-body">
         <div class="mb-3"><label class="form-label">Nombre * <small class="text-muted">(Ej: 2026-I)</small></label>
-            <input type="text" name="nombre" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
+            <input type="text" th:field="*{nombre}" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
+            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
             <div class="invalid-feedback">Ingresa un nombre de periodo válido.</div></div>
         <div class="row g-3">
-            <div class="col-6"><label class="form-label">Fecha Inicio</label><input type="date" name="fechaInicio" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Fecha Fin</label><input type="date" name="fechaFin" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Fecha Inicio *</label><input type="date" th:field="*{fechaInicio}" class="form-control" required>
+            <span th:if="${#fields.hasErrors('fechaInicio')}" th:errors="*{fechaInicio}" class="text-danger small"></span></div>
+            <div class="col-6"><label class="form-label">Fecha Fin *</label><input type="date" th:field="*{fechaFin}" class="form-control" required>
+            <span th:if="${#fields.hasErrors('fechaFin')}" th:errors="*{fechaFin}" class="text-danger small"></span></div>
         </div>
     </div><div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -66,15 +70,18 @@
     </div></form>
 </div></div></div>
 
-<div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Periodo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/periodos/actualizar}" method="post" id="formEditar" novalidate><input type="hidden" name="id" id="editId"><div class="modal-body">
+    <form th:action="@{/periodos/actualizar}" th:object="${periodoEditar}" method="post" id="formEditar" novalidate><input type="hidden" th:field="*{id}" id="editId"><div class="modal-body">
         <div class="mb-3"><label class="form-label">Nombre *</label>
-            <input type="text" name="nombre" id="editNombre" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
+            <input type="text" th:field="*{nombre}" id="editNombre" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
+            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
             <div class="invalid-feedback">Ingresa un nombre válido.</div></div>
         <div class="row g-3">
-            <div class="col-6"><label class="form-label">Fecha Inicio</label><input type="date" name="fechaInicio" id="editFechaInicio" class="form-control"></div>
-            <div class="col-6"><label class="form-label">Fecha Fin</label><input type="date" name="fechaFin" id="editFechaFin" class="form-control"></div>
+            <div class="col-6"><label class="form-label">Fecha Inicio *</label><input type="date" th:field="*{fechaInicio}" id="editFechaInicio" class="form-control" required>
+            <span th:if="${#fields.hasErrors('fechaInicio')}" th:errors="*{fechaInicio}" class="text-danger small"></span></div>
+            <div class="col-6"><label class="form-label">Fecha Fin *</label><input type="date" th:field="*{fechaFin}" id="editFechaFin" class="form-control" required>
+            <span th:if="${#fields.hasErrors('fechaFin')}" th:errors="*{fechaFin}" class="text-danger small"></span></div>
         </div>
     </div><div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -104,6 +111,11 @@
     }
     activarVal('formNuevo','formEditar');
 
+</script>
+<script th:inline="javascript">
+    // Si el servidor rechazó un formulario (@Valid), se vuelve a abrir su modal con los errores
+    const abrirModal = /*[[${abrirModal}]]*/ null;
+    if (abrirModal) new bootstrap.Modal(document.getElementById(abrirModal)).show();
 </script>
 </body>
 </html>

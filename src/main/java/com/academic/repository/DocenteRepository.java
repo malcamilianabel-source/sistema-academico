@@ -13,4 +13,5 @@ public interface DocenteRepository extends JpaRepository<Docente, Long> {
     Optional<Docente> findByDni(String dni);
     Optional<Docente> findByEmail(String email);
     Optional<Docente> findByTelefono(String telefono);
+    Optional<Docente> findByUsuarioId(Long usuarioId);
 }

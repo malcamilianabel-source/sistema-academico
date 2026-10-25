@@ -40,7 +40,7 @@
                             <td><span class="badge" style="background:#B58863" th:text="${u.rol}"></span></td>
                             <td>
                                 <button class="btn btn-edit btn-sm me-1" th:onclick="'editarUsuario(' + ${u.id} + ')'" title="Editar"><i class="bi bi-pencil-fill"></i></button>
-                                <a class="btn btn-delete btn-sm" th:href="@{/usuarios/eliminar/{id}(id=${u.id})}" onclick="return confirm('¿Eliminar usuario?')"><i class="bi bi-trash-fill"></i></a>
+                                <form th:action="@{/usuarios/eliminar/{id}(id=${u.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar usuario?')"><button type="submit" class="btn btn-delete btn-sm"><i class="bi bi-trash-fill"></i></button></form>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(usuarios)}"><td colspan="6" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay usuarios.</td></tr>
@@ -54,32 +54,37 @@
 
 <div class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nuevo Usuario</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/usuarios/guardar}" method="post" id="formNuevo" novalidate><div class="modal-body">
+    <form th:action="@{/usuarios/guardar}" th:object="${nuevoUsuario}" method="post" id="formNuevo" novalidate><div class="modal-body">
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label">Nombre *</label>
-                <input name="nombre" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                <input th:field="*{nombre}" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
                 <div class="invalid-feedback">Solo letras y espacios.</div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Apellido *</label>
-                <input name="apellido" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                <input th:field="*{apellido}" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                <span th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}" class="text-danger small"></span>
                 <div class="invalid-feedback">Solo letras y espacios.</div>
             </div>
         </div>
         <div class="mt-3">
             <label class="form-label">Email *</label>
-            <input name="email" type="email" class="form-control" required>
+            <input th:field="*{email}" type="email" class="form-control" required>
+            <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-danger small"></span>
             <div class="invalid-feedback">Ingresa un email válido.</div>
         </div>
         <div class="mt-3">
             <label class="form-label">Contraseña *</label>
-            <input name="password" type="password" class="form-control" minlength="4" required>
+            <input th:field="*{password}" type="password" class="form-control" minlength="4" required>
+            <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="text-danger small"></span>
             <div class="invalid-feedback">Mínimo 4 caracteres.</div>
         </div>
         <div class="mt-3">
             <label class="form-label">Rol *</label>
-            <select name="rol" class="form-select" required><option value="">Seleccionar...</option><option>ADMIN</option><option>DOCENTE</option><option>ESTUDIANTE</option></select>
+            <select th:field="*{rol}" class="form-select" required><option value="">Seleccionar...</option><option th:value="'ADMIN'">ADMIN</option><option th:value="'DOCENTE'">DOCENTE</option><option th:value="'ESTUDIANTE'">ESTUDIANTE</option></select>
+            <span th:if="${#fields.hasErrors('rol')}" th:errors="*{rol}" class="text-danger small"></span>
             <div class="invalid-feedback">Selecciona un rol.</div>
         </div>
     </div><div class="modal-footer">
@@ -90,32 +95,36 @@
 
 <div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Usuario</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/usuarios/actualizar}" method="post" id="formEditar" novalidate><input type="hidden" name="id" id="editId">
+    <form th:action="@{/usuarios/actualizar}" th:object="${usuarioEditar}" method="post" id="formEditar" novalidate><input type="hidden" th:field="*{id}" id="editId">
         <div class="modal-body">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Nombre *</label>
-                    <input name="nombre" id="editNombre" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                    <input th:field="*{nombre}" id="editNombre" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                    <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
                     <div class="invalid-feedback">Solo letras y espacios.</div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Apellido *</label>
-                    <input name="apellido" id="editApellido" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                    <input th:field="*{apellido}" id="editApellido" class="form-control" pattern="^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$" maxlength="100" required>
+                    <span th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}" class="text-danger small"></span>
                     <div class="invalid-feedback">Solo letras y espacios.</div>
                 </div>
             </div>
             <div class="mt-3">
                 <label class="form-label">Email *</label>
-                <input name="email" id="editEmail" type="email" class="form-control" required>
+                <input th:field="*{email}" id="editEmail" type="email" class="form-control" required>
+                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-danger small"></span>
                 <div class="invalid-feedback">Ingresa un email válido.</div>
             </div>
             <div class="mt-3">
                 <label class="form-label">Nueva contraseña <small class="text-muted">(dejar vacío para no cambiar)</small></label>
-                <input name="password" type="password" class="form-control">
+                <input th:field="*{password}" id="editPassword" type="password" class="form-control">
             </div>
             <div class="mt-3">
                 <label class="form-label">Rol *</label>
-                <select name="rol" id="editRol" class="form-select" required><option>ADMIN</option><option>DOCENTE</option><option>ESTUDIANTE</option></select>
+                <select th:field="*{rol}" id="editRol" class="form-select" required><option th:value="'ADMIN'">ADMIN</option><option th:value="'DOCENTE'">DOCENTE</option><option th:value="'ESTUDIANTE'">ESTUDIANTE</option></select>
+                <span th:if="${#fields.hasErrors('rol')}" th:errors="*{rol}" class="text-danger small"></span>
             </div>
         </div>
         <div class="modal-footer">
@@ -149,6 +158,11 @@
     }
     activarVal('formNuevo','formEditar');
 
+</script>
+<script th:inline="javascript">
+    // Si el servidor rechazó un formulario (@Valid), se vuelve a abrir su modal con los errores
+    const abrirModal = /*[[${abrirModal}]]*/ null;
+    if (abrirModal) new bootstrap.Modal(document.getElementById(abrirModal)).show();
 </script>
 </body>
 </html>

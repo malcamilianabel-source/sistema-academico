@@ -24,23 +24,24 @@
         </div>
         <div class="page-content">
             <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span></div>
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-person-check-fill me-2" style="color:#B58863;"></i>Lista de Asignaciones</h5>
-                    <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo"><i class="bi bi-plus-lg me-1"></i> Nueva Asignación</button>
+                    <button th:if="${session.usuario.rol == 'ADMIN'}" class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo"><i class="bi bi-plus-lg me-1"></i> Nueva Asignación</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table mb-0">
-                        <thead><tr><th>#</th><th>Curso</th><th class="col-hide-sm">Código</th><th>Docente</th><th>Periodo</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>#</th><th>Curso</th><th class="col-hide-sm">Código</th><th>Docente</th><th>Periodo</th><th th:if="${session.usuario.rol == 'ADMIN'}">Acciones</th></tr></thead>
                         <tbody>
                         <tr th:each="a, stat : ${asignaciones}">
                             <td th:text="${stat.count}"></td><td th:text="${a.curso.nombre}"></td>
                             <td class="col-hide-sm" th:text="${a.curso.codigo}"></td>
                             <td th:text="${a.docente.nombre + ' ' + a.docente.apellido}"></td>
                             <td th:text="${a.periodo.nombre}"></td>
-                            <td>
+                            <td th:if="${session.usuario.rol == 'ADMIN'}">
                                 <button class="btn btn-edit btn-sm me-1" th:onclick="'cargarEditar(' + ${a.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar"><i class="bi bi-pencil-fill"></i></button>
-                                <a th:href="@{/asignaciones/eliminar/{id}(id=${a.id})}" class="btn btn-delete btn-sm" onclick="return confirm('¿Eliminar esta asignación?')"><i class="bi bi-trash-fill"></i></a>
+                                <form th:action="@{/asignaciones/eliminar/{id}(id=${a.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta asignación?')"><button type="submit" class="btn btn-delete btn-sm"><i class="bi bi-trash-fill"></i></button></form>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(asignaciones)}"><td colspan="6" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay asignaciones.</td></tr>
@@ -52,7 +53,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nueva Asignación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <form th:action="@{/asignaciones/guardar}" method="post" id="formNuevo" novalidate><div class="modal-body">
         <div class="mb-3"><label class="form-label">Curso *</label>
@@ -82,7 +83,7 @@
     </div></form>
 </div></div></div>
 
-<div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Asignación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <form th:action="@{/asignaciones/actualizar}" method="post" id="formEditar" novalidate><input type="hidden" name="id" id="editId">
         <div class="modal-body">

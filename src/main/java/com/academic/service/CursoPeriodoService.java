@@ -29,4 +29,12 @@ public class CursoPeriodoService {
     public void eliminar(Long id) {
         repository.deleteById(id);
     }
+
+    public boolean existeAsignacion(Long cursoId, Long docenteId, Long periodoId, Long excludeId) {
+        Optional<CursoPeriodo> existente =
+                repository.findFirstByCursoIdAndDocenteIdAndPeriodoId(cursoId, docenteId, periodoId);
+        if (existente.isEmpty()) return false;
+        if (excludeId == null) return true;
+        return !existente.get().getId().equals(excludeId);
+    }
 }

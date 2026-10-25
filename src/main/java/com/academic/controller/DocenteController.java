@@ -3,9 +3,12 @@ package com.academic.controller;
 import com.academic.model.Docente;
 import com.academic.service.DocenteService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -31,13 +34,16 @@ public class DocenteController {
             lista = docenteService.listarTodos();
         }
         model.addAttribute("docentes", lista);
-        model.addAttribute("nuevoDocente", new Docente());
-        model.addAttribute("paginaActual", "docentes");
-        return "docentes/lista";
+        return vistaLista(model, null);
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute Docente docente, RedirectAttributes ra) {
+    public String guardar(@Valid @ModelAttribute Docente docente, BindingResult result,
+                          Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            model.addAttribute("docentes", docenteService.listarTodos());
+            return vistaLista(model, "modalNuevo");
+        }
         docente.setTelefono(normalizarTelefono(docente.getTelefono()));
 
         if (docenteService.existeDni(docente.getDni(), null)) {
@@ -52,8 +58,12 @@ public class DocenteController {
             ra.addFlashAttribute("error", "Ya existe un docente registrado con el teléfono " + docente.getTelefono() + ".");
             return "redirect:/docentes";
         }
-        docenteService.guardar(docente);
-        ra.addFlashAttribute("mensaje", "Docente guardado correctamente.");
+        try {
+            docenteService.guardar(docente);
+            ra.addFlashAttribute("mensaje", "Docente guardado correctamente.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/docentes";
     }
 
@@ -64,7 +74,12 @@ public class DocenteController {
     }
 
     @PostMapping("/actualizar")
-    public String actualizar(@ModelAttribute Docente form, RedirectAttributes ra) {
+    public String actualizar(@Valid @ModelAttribute("docenteEditar") Docente form, BindingResult result,
+                             Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            model.addAttribute("docentes", docenteService.listarTodos());
+            return vistaLista(model, "modalEditar");
+        }
         form.setTelefono(normalizarTelefono(form.getTelefono()));
 
         if (docenteService.existeDni(form.getDni(), form.getId())) {
@@ -86,16 +101,34 @@ public class DocenteController {
         d.setTelefono(form.getTelefono());
         d.setEspecialidad(form.getEspecialidad());
         d.setEmail(form.getEmail());
-        docenteService.guardar(d);
-        ra.addFlashAttribute("mensaje", "Docente actualizado correctamente.");
+        try {
+            docenteService.guardar(d);
+            ra.addFlashAttribute("mensaje", "Docente actualizado correctamente.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/docentes";
     }
 
-    @GetMapping("/eliminar/{id}")
+    @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
-        docenteService.eliminar(id);
-        ra.addFlashAttribute("mensaje", "Docente eliminado correctamente.");
+        try {
+            docenteService.eliminar(id);
+            ra.addFlashAttribute("mensaje", "Docente eliminado correctamente.");
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("error",
+                    "No se puede eliminar el docente porque tiene cursos asignados.");
+        }
         return "redirect:/docentes";
+    }
+
+    /** Completa el modelo de la lista; si viene de un formulario con errores, reabre su modal. */
+    private String vistaLista(Model model, String abrirModal) {
+        if (!model.containsAttribute("docente")) model.addAttribute("docente", new Docente());
+        if (!model.containsAttribute("docenteEditar")) model.addAttribute("docenteEditar", new Docente());
+        model.addAttribute("abrirModal", abrirModal);
+        model.addAttribute("paginaActual", "docentes");
+        return "docentes/lista";
     }
 
     private String normalizarTelefono(String telefono) {

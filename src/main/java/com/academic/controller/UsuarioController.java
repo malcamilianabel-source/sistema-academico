@@ -2,9 +2,11 @@ package com.academic.controller;
 
 import com.academic.model.Usuario;
 import com.academic.service.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -17,31 +19,28 @@ public class UsuarioController {
 
     @GetMapping
     public String listar(Model model) {
-        model.addAttribute("usuarios", usuarioService.listarTodos());
-        model.addAttribute("paginaActual", "usuarios");
-        return "usuarios/lista";
+        return vistaLista(model, null);
     }
 
     @PostMapping("/guardar")
-    public String guardar(@RequestParam String nombre,
-                          @RequestParam String apellido,
-                          @RequestParam String email,
-                          @RequestParam String password,
-                          @RequestParam String rol,
-                          RedirectAttributes ra) {
-        if (usuarioService.existeEmail(email)) {
+    public String guardar(@Valid @ModelAttribute("nuevoUsuario") Usuario usuario, BindingResult result,
+                          Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            return vistaLista(model, "modalNuevo");
+        }
+        if (usuarioService.existeEmail(usuario.getEmail())) {
             ra.addFlashAttribute("error", "Ya existe un usuario con ese correo.");
             return "redirect:/usuarios";
         }
 
-        Usuario usuario = new Usuario();
-        usuario.setNombre(nombre);
-        usuario.setApellido(apellido);
-        usuario.setEmail(email);
-        usuario.setPassword(password);
-        usuario.setRol(rol);
-        usuarioService.guardar(usuario);
-        ra.addFlashAttribute("mensaje", "Usuario registrado correctamente.");
+        try {
+            usuario.setId(null);
+            usuario.setPassword(usuarioService.codificarPassword(usuario.getPassword()));
+            usuarioService.guardar(usuario);
+            ra.addFlashAttribute("mensaje", "Usuario registrado correctamente.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/usuarios";
     }
 
@@ -52,29 +51,31 @@ public class UsuarioController {
     }
 
     @PostMapping("/actualizar")
-    public String actualizar(@RequestParam Long id,
-                             @RequestParam String nombre,
-                             @RequestParam String apellido,
-                             @RequestParam String email,
-                             @RequestParam(required = false) String password,
-                             @RequestParam String rol,
-                             RedirectAttributes ra) {
-        Usuario usuario = usuarioService.buscarPorId(id).orElseThrow();
+    public String actualizar(@Valid @ModelAttribute("usuarioEditar") Usuario form, BindingResult result,
+                             Model model, RedirectAttributes ra) {
+        // Al editar, la contraseña vacía significa "no cambiarla": su @NotBlank no cuenta como error
+        boolean soloFaltaPassword = form.getPassword() == null
+                && result.getErrorCount() == result.getFieldErrorCount("password");
+        if (result.hasErrors() && !soloFaltaPassword) {
+            return vistaLista(model, "modalEditar");
+        }
 
-        var existenteEmail = usuarioService.buscarPorEmail(email);
-        if (existenteEmail.isPresent() && !existenteEmail.get().getId().equals(id)) {
+        Usuario usuario = usuarioService.buscarPorId(form.getId()).orElseThrow();
+
+        var existenteEmail = usuarioService.buscarPorEmail(form.getEmail());
+        if (existenteEmail.isPresent() && !existenteEmail.get().getId().equals(usuario.getId())) {
             ra.addFlashAttribute("error", "Ya existe un usuario con ese correo.");
             return "redirect:/usuarios";
         }
 
         try {
-            usuario.setNombre(nombre);
-            usuario.setApellido(apellido);
-            usuario.setEmail(email);
-            if (password != null && !password.isBlank()) {
-                usuario.setPassword(password);
+            usuario.setNombre(form.getNombre());
+            usuario.setApellido(form.getApellido());
+            usuario.setEmail(form.getEmail());
+            if (form.getPassword() != null) {
+                usuario.setPassword(usuarioService.codificarPassword(form.getPassword()));
             }
-            usuario.setRol(rol);
+            usuario.setRol(form.getRol());
             usuarioService.guardar(usuario);
             ra.addFlashAttribute("mensaje", "Usuario actualizado correctamente.");
         } catch (IllegalArgumentException e) {
@@ -83,10 +84,20 @@ public class UsuarioController {
         return "redirect:/usuarios";
     }
 
-    @GetMapping("/eliminar/{id}")
+    @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         usuarioService.eliminar(id);
         ra.addFlashAttribute("mensaje", "Usuario eliminado correctamente.");
         return "redirect:/usuarios";
+    }
+
+    /** Completa el modelo de la lista; si viene de un formulario con errores, reabre su modal. */
+    private String vistaLista(Model model, String abrirModal) {
+        model.addAttribute("usuarios", usuarioService.listarTodos());
+        if (!model.containsAttribute("nuevoUsuario")) model.addAttribute("nuevoUsuario", new Usuario());
+        if (!model.containsAttribute("usuarioEditar")) model.addAttribute("usuarioEditar", new Usuario());
+        model.addAttribute("abrirModal", abrirModal);
+        model.addAttribute("paginaActual", "usuarios");
+        return "usuarios/lista";
     }
 }

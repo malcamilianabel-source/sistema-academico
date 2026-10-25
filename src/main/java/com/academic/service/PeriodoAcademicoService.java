@@ -23,6 +23,8 @@ public class PeriodoAcademicoService {
     }
 
     public PeriodoAcademico guardar(PeriodoAcademico periodo) {
+        Validaciones.exigir(Validaciones.coincide(periodo.getNombre(), "^[\\w\\s\\-.]{2,50}$"),
+                "Ingresa un nombre de periodo válido (de 2 a 50 caracteres).");
         return repository.save(periodo);
     }
 

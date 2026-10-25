@@ -192,6 +192,36 @@ body {
 .stat-icon.docentes    { background-color: #f0faf0; color: #2E7D32; }
 .stat-icon.cursos      { background-color: #fff8e1; color: #F57F17; }
 .stat-icon.usuarios    { background-color: #fce4ec; color: #C62828; }
+.stat-icon.matriculas  { background-color: #f6efe9; color: var(--color-accent); }
+.stat-icon.riesgo      { background-color: #fdf0f0; color: #B42318; }
+.stat-icon.promedio    { background-color: #eef1f2; color: var(--color-secondary); }
+
+/* ── CARDS DE PANEL (dashboard, historial) ────────────── */
+.panel-card {
+    background-color: #fff;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.panel-card .card-header {
+    background-color: var(--color-sidebar);
+    color: var(--color-light);
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.badge-estado { font-size: 0.75rem; font-weight: 600; }
+.badge-estado.APROBADO, .badge-estado.PRESENTE   { background-color: #2E7D32; }
+.badge-estado.DESAPROBADO, .badge-estado.AUSENTE { background-color: #B42318; }
+.badge-estado.TARDANZA                           { background-color: #B58863; }
+.badge-estado.RETIRADO, .badge-estado.SIN-NOTAS  { background-color: #A79E9C; }
+
+/* Planilla de asistencia: opciones como botones */
+.asistencia-opciones .btn { font-size: 0.78rem; padding: 0.25rem 0.6rem; }
+.asistencia-opciones .btn-check:checked + .btn-outline-success { background-color: #2E7D32; color: #fff; }
+.asistencia-opciones .btn-check:checked + .btn-outline-danger  { background-color: #B42318; color: #fff; }
+.asistencia-opciones .btn-check:checked + .btn-outline-warning { background-color: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.asistencia-opciones .btn-outline-warning { color: var(--color-accent); border-color: var(--color-accent); }
 
 .stat-info h3 {
     font-size: 1.8rem;
