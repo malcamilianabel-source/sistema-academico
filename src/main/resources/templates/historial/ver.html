@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Académico - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
+                <h1 class="page-title"><i class="bi bi-clock-history me-2"></i>Historial Académico</h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+        <div class="page-content">
+            <div th:if="${aviso}" class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-info-circle-fill"></i><span th:text="${aviso}"></span></div>
+
+            <!-- Selector de estudiante (solo administrador) -->
+            <div th:if="${estudiantes != null}" class="tabla-container p-3 mb-3">
+                <form th:action="@{/historial}" method="get" class="d-flex flex-wrap gap-2 align-items-center">
+                    <label class="form-label mb-0" for="estudianteId">Estudiante</label>
+                    <select name="estudianteId" id="estudianteId" class="form-select form-select-sm" style="max-width:420px;" onchange="this.form.submit()">
+                        <option value="">Seleccionar...</option>
+                        <option th:each="e : ${estudiantes}" th:value="${e.id}"
+                                th:selected="${estudiante != null and estudiante.id == e.id}"
+                                th:text="${e.apellido + ', ' + e.nombre + ' — ' + e.dni}"></option>
+                    </select>
+                    <noscript><button type="submit" class="btn btn-sm btn-accent">Ver</button></noscript>
+                </form>
+            </div>
+
+            <th:block th:if="${estudiante != null}">
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-icon estudiantes"><i class="bi bi-person-badge"></i></div>
+                            <div class="stat-info"><h3 class="fs-6 fw-bold" th:text="${estudiante.nombre + ' ' + estudiante.apellido}"></h3><p th:text="${'DNI ' + estudiante.dni}"></p></div></div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-icon promedio"><i class="bi bi-graph-up"></i></div>
+                            <div class="stat-info"><h3 th:text="${promedioGeneral != null ? #numbers.formatDecimal(promedioGeneral, 1, 2) : '—'}"></h3><p>Promedio ponderado</p></div></div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-icon docentes"><i class="bi bi-check2-circle"></i></div>
+                            <div class="stat-info"><h3 th:text="${aprobados}">0</h3><p th:text="${'Aprobados · ' + creditosAprobados + ' créditos'}"></p></div></div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-icon riesgo"><i class="bi bi-x-circle"></i></div>
+                            <div class="stat-info"><h3 th:text="${desaprobados}">0</h3><p>Desaprobados</p></div></div>
+                    </div>
+                </div>
+
+                <div class="tabla-container">
+                    <div class="tabla-header">
+                        <h5><i class="bi bi-journal-bookmark me-2" style="color:#B58863;"></i>Cursos llevados</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle">
+                            <thead><tr><th>Periodo</th><th>Código</th><th>Curso</th><th class="col-hide-sm">Créditos</th><th class="col-hide-sm">Docente</th><th class="col-hide-sm">Notas</th><th>Promedio</th><th>Estado</th></tr></thead>
+                            <tbody>
+                            <tr th:each="h : ${historial}">
+                                <td th:text="${h.periodo}"></td>
+                                <td><span class="badge" style="background-color:#3D4D55;" th:text="${h.codigo}"></span></td>
+                                <td>
+                                    <span th:text="${h.curso}"></span>
+                                    <small th:if="${h.estadoMatricula != 'ACTIVO'}" class="d-block" style="color:#A79E9C;" th:text="${'Matrícula ' + #strings.toLowerCase(h.estadoMatricula)}"></small>
+                                </td>
+                                <td class="col-hide-sm" th:text="${h.creditos != null ? h.creditos : '—'}"></td>
+                                <td class="col-hide-sm" th:text="${h.docente}"></td>
+                                <td class="col-hide-sm" th:text="${h.cantidadNotas}"></td>
+                                <td class="fw-semibold" th:style="${h.conNotas and h.promedio < 11} ? 'color:#B42318' : 'color:#10232A'"
+                                    th:text="${h.conNotas ? #numbers.formatDecimal(h.promedio, 1, 2) : '—'}"></td>
+                                <td><span class="badge badge-estado" th:classappend="${#strings.replace(h.estadoAcademico, ' ', '-')}" th:text="${h.estadoAcademico}"></span></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(historial)}"><td colspan="8" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>El estudiante no tiene matrículas registradas.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p class="small mt-2 mb-0" style="color:#A79E9C;">Promedio por curso = media de sus evaluaciones. Nota aprobatoria: 11. El promedio ponderado usa los créditos de cada curso y excluye los retirados.</p>
+            </th:block>
+
+            <div th:if="${estudiante == null and estudiantes != null}" class="tabla-container p-4 text-center" style="color:#A79E9C;">
+                <i class="bi bi-person-lines-fill fs-2 d-block mb-2"></i>Selecciona un estudiante para ver su historial.
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
+    if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
+    if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
+</script>
+</body>
+</html>

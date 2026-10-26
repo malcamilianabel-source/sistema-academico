@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesiones - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
+                <h1 class="page-title"><i class="bi bi-calendar-event me-2"></i>Sesiones de Clase</h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+        <div class="page-content">
+            <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span></div>
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
+            <div class="tabla-container">
+                <div class="tabla-header">
+                    <h5><i class="bi bi-calendar-event me-2" style="color:#B58863;"></i>Lista de Sesiones</h5>
+                    <a th:if="${session.usuario.rol == 'ADMIN'}" th:href="@{/sesiones/nuevo}" class="btn btn-sm btn-accent"><i class="bi bi-plus-lg me-1"></i> Nueva Sesión</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>#</th><th>Fecha</th><th>Horario</th><th>Curso</th><th class="col-hide-sm">Periodo</th><th class="col-hide-sm">Aula</th><th>Tipo</th><th class="col-hide-sm">Asistencias</th><th>Acciones</th></tr></thead>
+                        <tbody>
+                        <tr th:each="s, stat : ${sesiones}">
+                            <td th:text="${stat.count}"></td>
+                            <td th:text="${#temporals.format(s.fechaSesion, 'dd/MM/yyyy')}"></td>
+                            <td th:text="${s.horaInicio != null ? #temporals.format(s.horaInicio, 'HH:mm') + (s.horaFin != null ? ' – ' + #temporals.format(s.horaFin, 'HH:mm') : '') : '—'}"></td>
+                            <td th:text="${s.cursoPeriodo.curso.codigo + ' — ' + s.cursoPeriodo.curso.nombre}"></td>
+                            <td class="col-hide-sm" th:text="${s.cursoPeriodo.periodo.nombre}"></td>
+                            <td class="col-hide-sm" th:text="${s.aula}"></td>
+                            <td><span class="badge" th:style="${s.tipo == 'VIRTUAL'} ? 'background-color:#3D4D55' : 'background-color:#B58863'" th:text="${s.tipo}"></span></td>
+                            <td class="col-hide-sm" th:text="${asistenciasPorSesion.getOrDefault(s.id, 0L)}"></td>
+                            <td class="text-nowrap">
+                                <a th:href="@{/asistencias/sesion/{id}(id=${s.id})}" class="btn btn-sm btn-accent me-1" title="Tomar asistencia"><i class="bi bi-clipboard-check"></i></a>
+                                <th:block th:if="${session.usuario.rol == 'ADMIN'}">
+                                    <a th:href="@{/sesiones/editar/{id}(id=${s.id})}" class="btn btn-edit btn-sm me-1" title="Editar"><i class="bi bi-pencil-fill"></i></a>
+                                    <form th:action="@{/sesiones/eliminar/{id}(id=${s.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta sesión?')"><button type="submit" class="btn btn-delete btn-sm" title="Eliminar"><i class="bi bi-trash-fill"></i></button></form>
+                                </th:block>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(sesiones)}"><td colspan="9" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay sesiones registradas.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
+    if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
+    if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
+</script>
+</body>
+</html>

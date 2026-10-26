@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asistencia - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
+                <h1 class="page-title"><i class="bi bi-clipboard-check me-2"></i>Registro de Asistencia</h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+        <div class="page-content">
+            <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span></div>
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
+
+            <div class="panel-card card mb-3">
+                <div class="card-body d-flex flex-wrap gap-4 align-items-center">
+                    <div>
+                        <div class="small" style="color:#A79E9C;">Curso</div>
+                        <div class="fw-semibold" style="color:#10232A;" th:text="${sesion.cursoPeriodo.curso.codigo + ' — ' + sesion.cursoPeriodo.curso.nombre}"></div>
+                    </div>
+                    <div>
+                        <div class="small" style="color:#A79E9C;">Fecha</div>
+                        <div class="fw-semibold" th:text="${#temporals.format(sesion.fechaSesion, 'dd/MM/yyyy')}"></div>
+                    </div>
+                    <div th:if="${sesion.horaInicio != null}">
+                        <div class="small" style="color:#A79E9C;">Horario</div>
+                        <div class="fw-semibold" th:text="${#temporals.format(sesion.horaInicio, 'HH:mm') + (sesion.horaFin != null ? ' – ' + #temporals.format(sesion.horaFin, 'HH:mm') : '')}"></div>
+                    </div>
+                    <div>
+                        <div class="small" style="color:#A79E9C;">Aula</div>
+                        <div class="fw-semibold" th:text="${sesion.aula + ' · ' + sesion.tipo}"></div>
+                    </div>
+                    <div class="ms-auto">
+                        <span th:if="${yaRegistrada}" class="badge bg-success">Asistencia ya registrada</span>
+                        <span th:unless="${yaRegistrada}" class="badge bg-secondary">Pendiente</span>
+                    </div>
+                </div>
+            </div>
+
+            <form th:action="@{/asistencias/sesion/{id}(id=${sesion.id})}" method="post">
+                <div class="tabla-container">
+                    <div class="tabla-header">
+                        <h5><i class="bi bi-people-fill me-2" style="color:#B58863;"></i>Estudiantes matriculados
+                            (<span th:text="${#lists.size(matriculas)}">0</span>)</h5>
+                        <div class="d-flex gap-2" th:unless="${#lists.isEmpty(matriculas)}">
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="marcarTodos('PRESENTE')">Todos presentes</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="marcarTodos('AUSENTE')">Todos ausentes</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle">
+                            <thead><tr><th>#</th><th>Estudiante</th><th class="col-hide-sm">DNI</th><th>Asistencia</th></tr></thead>
+                            <tbody>
+                            <tr th:each="m, stat : ${matriculas}" th:with="actual=${estados.getOrDefault(m.id, 'PRESENTE')}">
+                                <td th:text="${stat.count}"></td>
+                                <td th:text="${m.estudiante.apellido + ', ' + m.estudiante.nombre}"></td>
+                                <td class="col-hide-sm" th:text="${m.estudiante.dni}"></td>
+                                <td>
+                                    <div class="btn-group asistencia-opciones" role="group">
+                                        <input type="radio" class="btn-check" th:name="${'estado_' + m.id}" th:id="${'p_' + m.id}" value="PRESENTE" th:checked="${actual == 'PRESENTE'}" required>
+                                        <label class="btn btn-outline-success" th:for="${'p_' + m.id}">Presente</label>
+                                        <input type="radio" class="btn-check" th:name="${'estado_' + m.id}" th:id="${'t_' + m.id}" value="TARDANZA" th:checked="${actual == 'TARDANZA'}">
+                                        <label class="btn btn-outline-warning" th:for="${'t_' + m.id}">Tardanza</label>
+                                        <input type="radio" class="btn-check" th:name="${'estado_' + m.id}" th:id="${'a_' + m.id}" value="AUSENTE" th:checked="${actual == 'AUSENTE'}">
+                                        <label class="btn btn-outline-danger" th:for="${'a_' + m.id}">Ausente</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(matriculas)}"><td colspan="4" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay estudiantes con matrícula activa en este curso.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/asistencias}" class="btn btn-secondary btn-sm">Volver</a>
+                    <button th:unless="${#lists.isEmpty(matriculas)}" type="submit" class="btn btn-accent btn-sm"><i class="bi bi-save me-1"></i>Guardar asistencia</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
+    if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
+    if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
+    function marcarTodos(estado){
+        document.querySelectorAll('input.btn-check[value="'+estado+'"]').forEach(r=>r.checked=true);
+    }
+</script>
+</body>
+</html>

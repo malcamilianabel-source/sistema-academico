@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${sesion.id == null ? 'Nueva Sesión' : 'Editar Sesión'} + ' - Sistema Académico'">Sesión - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
+                <h1 class="page-title"><i class="bi bi-calendar-event me-2"></i><span th:text="${sesion.id == null ? 'Nueva Sesión' : 'Editar Sesión'}">Sesión</span></h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+        <div class="page-content">
+            <div class="tabla-container p-4" style="max-width:760px;">
+                <form th:action="${sesion.id == null} ? @{/sesiones/guardar} : @{/sesiones/actualizar}"
+                      th:object="${sesion}" method="post" id="formSesion" novalidate>
+                    <input type="hidden" th:field="*{id}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Curso / Periodo *</label>
+                            <select th:field="*{cursoPeriodo.id}" class="form-select" required>
+                                <option value="">Seleccionar...</option>
+                                <option th:each="cp : ${cursosPeriodo}" th:value="${cp.id}"
+                                        th:text="${cp.curso.codigo + ' — ' + cp.curso.nombre + ' | ' + cp.periodo.nombre + ' | ' + cp.docente.nombre + ' ' + cp.docente.apellido}"></option>
+                            </select>
+                            <span th:if="${#fields.hasErrors('cursoPeriodo.id')}" th:errors="*{cursoPeriodo.id}" class="text-danger small"></span>
+                            <div class="invalid-feedback">Selecciona un curso.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha *</label>
+                            <input type="date" th:field="*{fechaSesion}" class="form-control" required>
+                            <span th:if="${#fields.hasErrors('fechaSesion')}" th:errors="*{fechaSesion}" class="text-danger small"></span>
+                            <div class="invalid-feedback">Ingresa la fecha de la sesión.</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label">Hora inicio</label>
+                            <input type="time" th:field="*{horaInicio}" class="form-control">
+                            <span th:if="${#fields.hasErrors('horaInicio')}" th:errors="*{horaInicio}" class="text-danger small"></span>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label">Hora fin</label>
+                            <input type="time" th:field="*{horaFin}" class="form-control">
+                            <span th:if="${#fields.hasErrors('horaFin')}" th:errors="*{horaFin}" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Aula *</label>
+                            <input type="text" th:field="*{aula}" class="form-control" maxlength="50" placeholder="Ej: A-201 o enlace de Meet" required>
+                            <span th:if="${#fields.hasErrors('aula')}" th:errors="*{aula}" class="text-danger small"></span>
+                            <div class="invalid-feedback">Ingresa el aula.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo *</label>
+                            <select th:field="*{tipo}" class="form-select" required>
+                                <option th:value="'PRESENCIAL'">PRESENCIAL</option>
+                                <option th:value="'VIRTUAL'">VIRTUAL</option>
+                            </select>
+                            <span th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a th:href="@{/sesiones}" class="btn btn-secondary btn-sm">Cancelar</a>
+                        <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-save me-1"></i><span th:text="${sesion.id == null ? 'Guardar' : 'Actualizar'}">Guardar</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
+    if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
+    if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
+    const f=document.getElementById('formSesion');
+    f.addEventListener('submit',e=>{if(!f.checkValidity()){e.preventDefault();e.stopPropagation();}f.classList.add('was-validated');});
+</script>
+</body>
+</html>
