@@ -43,7 +43,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return true;
             }
             if ((path.startsWith("/cursos") || path.startsWith("/periodos")
-                    || path.startsWith("/asignaciones") || path.startsWith("/matriculas"))
+                    || path.startsWith("/asignaciones"))
                     && "GET".equalsIgnoreCase(method)) {
                 return true;
             }
@@ -51,7 +51,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if ("ESTUDIANTE".equals(rol)) {
-            if (path.equals("/dashboard") || path.equals("/logout") || path.equals("/historial")) {
+            if (path.equals("/dashboard") || path.equals("/logout") || path.equals("/historial")
+                    || (path.equals("/matriculas") && "GET".equalsIgnoreCase(method))
+                    || (path.equals("/matriculas/registrar") && "POST".equalsIgnoreCase(method))) {
                 return true;
             }
             return denegar(response);

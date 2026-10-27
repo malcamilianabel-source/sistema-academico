@@ -80,13 +80,13 @@
                             </div>
 
                             <div th:if="${session.usuario.rol == 'DOCENTE'}" class="d-flex flex-wrap gap-2">
-                                <a th:href="@{/matriculas}" class="btn btn-sm btn-accent">Matrículas</a>
                                 <a th:href="@{/evaluaciones}" class="btn btn-sm btn-accent">Calificaciones</a>
                                 <a th:href="@{/asistencias}" class="btn btn-sm btn-accent">Asistencia</a>
                             </div>
 
                             <div th:if="${session.usuario.rol == 'ESTUDIANTE'}">
                                 <p class="mb-3" style="font-size:0.9rem;">Consulta tus cursos, promedios y estado académico.</p>
+                                <a th:href="@{/matriculas}" class="btn btn-sm btn-accent">Mi matrícula</a>
                                 <a th:href="@{/historial}" class="btn btn-sm btn-accent"><i class="bi bi-clock-history me-1"></i>Ver mi historial</a>
                             </div>
                         </div>

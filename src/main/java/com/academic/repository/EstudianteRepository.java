@@ -13,4 +13,8 @@ public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
     Optional<Estudiante> findByDni(String dni);
     Optional<Estudiante> findByEmail(String email);
     Optional<Estudiante> findByUsuarioId(Long usuarioId);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select e from Estudiante e where e.usuario.id = :usuarioId")
+    Optional<Estudiante> buscarPorUsuarioConBloqueo(@org.springframework.data.repository.query.Param("usuarioId") Long usuarioId);
 }

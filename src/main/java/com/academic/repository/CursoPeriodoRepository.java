@@ -8,5 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface CursoPeriodoRepository extends JpaRepository<CursoPeriodo, Long> {
+    java.util.List<CursoPeriodo> findByPeriodoNombreIgnoreCaseOrderByCursoNombreAsc(String nombre);
+
     Optional<CursoPeriodo> findFirstByCursoIdAndDocenteIdAndPeriodoId(Long cursoId, Long docenteId, Long periodoId);
 }

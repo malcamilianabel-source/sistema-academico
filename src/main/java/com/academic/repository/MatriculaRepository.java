@@ -15,6 +15,8 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
     List<Matricula> findByCursoPeriodoId(Long cursoPeriodoId);
     List<Matricula> findByCursoPeriodoIdAndEstadoOrderByEstudianteApellidoAsc(Long cursoPeriodoId, String estado);
     long countByEstado(String estado);
+    boolean existsByEstudianteIdAndCursoPeriodoCursoIdAndCursoPeriodoPeriodoNombreIgnoreCase(Long estudianteId, Long cursoId, String periodo);
+
     boolean existsByEstudianteIdAndCursoPeriodoId(Long estudianteId, Long cursoPeriodoId);
 
     @Query("select m from Matricula m where m.cursoPeriodo.docente.usuario.id = :usuarioId")
