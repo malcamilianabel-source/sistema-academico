@@ -19,21 +19,37 @@
             <div th:if="${cursosPeriodo != null}">
                 <div class="tabla-container p-3 mb-4">
                     <h4>Selecciona tus cursos</h4>
-                    <p>Periodo habilitado: <strong th:text="${periodoActual}"></strong>. Selecciona los cursos y confirma en una sola operación.</p>
-                    <p th:if="${#lists.isEmpty(cursosPeriodo)}">No hay cursos disponibles en este periodo. Contacta al administrador.</p>
+                    <p th:if="${periodoActual != null}">Periodo habilitado: <strong th:text="${periodoActual}"></strong>. Elige una sección por curso y confirma en una sola operación.</p>
+                    <p th:if="${periodoActual == null}" class="alert alert-secondary py-2 mb-0">La matrícula está cerrada en este momento. Consulta las fechas con la administración.</p>
+                    <p th:if="${periodoActual != null and #lists.isEmpty(cursosPeriodo)}">No hay secciones disponibles en este periodo. Contacta al administrador.</p>
                     <form th:unless="${#lists.isEmpty(cursosPeriodo)}" th:action="@{/matriculas/registrar}" method="post">
-                        <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Seleccionar</th><th>Código</th><th>Curso</th><th>Créditos</th><th>Docente</th></tr></thead><tbody>
-                            <tr th:each="cp : ${cursosPeriodo}"><td><input class="form-check-input" type="checkbox" name="cursosIds" th:value="${cp.id}" th:aria-label="${'Seleccionar ' + cp.curso.nombre}"></td><td th:text="${cp.curso.codigo}"></td><td th:text="${cp.curso.nombre}"></td><td th:text="${cp.curso.creditos}"></td><td th:text="${cp.docente.nombre + ' ' + cp.docente.apellido}"></td></tr>
+                        <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Seleccionar</th><th>Código</th><th>Curso</th><th>Sección</th><th class="col-hide-sm">Créditos</th><th class="col-hide-sm">Docentes</th><th>Vacantes libres</th></tr></thead><tbody>
+                            <tr th:each="cp : ${cursosPeriodo}" th:with="libres=${cp.vacantes - matriculados.getOrDefault(cp.id, 0L)}">
+                                <td><input class="form-check-input" type="checkbox" name="cursosIds" th:value="${cp.id}" th:disabled="${libres <= 0}" th:attr="data-curso=${cp.curso.id}" th:aria-label="${'Seleccionar ' + cp.curso.nombre + ' sección ' + cp.seccion}"></td>
+                                <td th:text="${cp.curso.codigo}"></td><td th:text="${cp.curso.nombre}"></td>
+                                <td><span class="badge" style="background-color:#3D4D55;" th:text="${cp.seccion}"></span></td>
+                                <td class="col-hide-sm" th:text="${cp.curso.creditos}"></td>
+                                <td class="col-hide-sm"><span th:each="a, st : ${docentesPorSeccion.get(cp.id)}" th:text="${a.docente.nombre + ' ' + a.docente.apellido + (a.titular ? '' : ' (apoyo)') + (st.last ? '' : ', ')}"></span></td>
+                                <td><span th:if="${libres > 0}" th:text="${libres + ' de ' + cp.vacantes}"></span><span th:if="${libres <= 0}" class="badge bg-secondary">Sin vacantes</span></td>
+                            </tr>
                         </tbody></table></div><button type="submit" class="btn btn-accent">Confirmar matrícula</button>
                     </form>
                 </div>
-                <div class="tabla-container p-3"><h4>Mis matrículas</h4><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Periodo</th><th>Curso</th><th>Docente</th><th>Estado</th></tr></thead><tbody>
-                    <tr th:each="m : ${matriculas}"><td th:text="${m.cursoPeriodo.periodo.nombre}"></td><td th:text="${m.cursoPeriodo.curso.nombre}"></td><td th:text="${m.cursoPeriodo.docente.nombre + ' ' + m.cursoPeriodo.docente.apellido}"></td><td th:text="${m.estado}"></td></tr>
-                    <tr th:if="${#lists.isEmpty(matriculas)}"><td colspan="4">Aún no tienes matrículas registradas.</td></tr>
+                <div class="tabla-container p-3"><h4>Mis matrículas</h4><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Periodo</th><th>Curso</th><th>Sección</th><th>Docente</th><th>Estado</th></tr></thead><tbody>
+                    <tr th:each="m : ${matriculas}"><td th:text="${m.cursoPeriodo.periodo.nombre}"></td><td th:text="${m.cursoPeriodo.curso.nombre}"></td><td th:text="${m.cursoPeriodo.seccion}"></td><td th:text="${m.cursoPeriodo.docente.nombre + ' ' + m.cursoPeriodo.docente.apellido}"></td><td><span th:if="${m.estado == 'ACTIVO'}" class="badge bg-success-subtle text-success-emphasis">Activo</span><span th:if="${m.estado == 'RETIRADO'}" class="badge bg-danger-subtle text-danger-emphasis">Retirado</span><span th:if="${m.estado == 'CULMINADO'}" class="badge bg-primary-subtle text-primary-emphasis">Culminado</span></td></tr>
+                    <tr th:if="${#lists.isEmpty(matriculas)}"><td colspan="5">Aún no tienes matrículas registradas.</td></tr>
                 </tbody></table></div></div>
             </div>
         </div>
     </div>
 </div>
+<script>
+    // Una sola sección por curso: al marcar una, se desmarcan las otras del mismo curso
+    document.querySelectorAll('input[name=cursosIds]').forEach(c => c.addEventListener('change', () => {
+        if (!c.checked) return;
+        document.querySelectorAll('input[name=cursosIds][data-curso="' + c.dataset.curso + '"]')
+            .forEach(o => { if (o !== c) o.checked = false; });
+    }));
+</script>
 <script>const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),btn=document.getElementById('sidebarToggle');if(btn)btn.addEventListener('click',()=>{sb.classList.add('sidebar-open');ov.classList.add('show');});if(ov)ov.addEventListener('click',()=>{sb.classList.remove('sidebar-open');ov.classList.remove('show');});</script>
 </body></html>

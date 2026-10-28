@@ -34,38 +34,29 @@ public class EstudianteController {
         } else {
             lista = estudianteService.listarTodos();
         }
+
         model.addAttribute("estudiantes", lista);
         return vistaLista(model, null);
     }
 
-    // ── CREAR  ────────────────────────────────────────────────
+    // ── CREAR ───────────────────────────────────────────────
+    // Cualquier error (formato o dato repetido) vuelve al modal con lo escrito y el campo marcado.
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute Estudiante estudiante, BindingResult result,
                           Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            model.addAttribute("estudiantes", estudianteService.listarTodos());
-            return vistaLista(model, "modalNuevo");
+        if (!result.hasErrors()) {
+            try {
+                estudianteService.registrar(estudiante);
+                ra.addFlashAttribute("mensaje", "Estudiante guardado correctamente.");
+                return "redirect:/estudiantes";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        // Validar DNI duplicado
-        if (estudianteService.existeDni(estudiante.getDni(), null)) {
-            ra.addFlashAttribute("error",
-                    "Ya existe un estudiante con el DNI " + estudiante.getDni() + ".");
-            return "redirect:/estudiantes";
-        }
-        // Validar Email duplicado
-        if (estudianteService.existeEmail(estudiante.getEmail(), null)) {
-            ra.addFlashAttribute("error",
-                    "Ya existe un estudiante con ese email.");
-            return "redirect:/estudiantes";
-        }
-        try {
-            estudianteService.guardar(estudiante);
-            ra.addFlashAttribute("mensaje",
-                    "Estudiante guardado correctamente.");
-        } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/estudiantes";
+        model.addAttribute("estudiantes", estudianteService.listarTodos());
+        return vistaLista(model, "modalNuevo");
     }
 
     // ── EDITAR (JSON para el modal) ──────────────────────────
@@ -79,34 +70,23 @@ public class EstudianteController {
     @PostMapping("/actualizar")
     public String actualizar(@Valid @ModelAttribute("estudianteEditar") Estudiante form, BindingResult result,
                              Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            model.addAttribute("estudiantes", estudianteService.listarTodos());
-            return vistaLista(model, "modalEditar");
-        }
-        // Validar DNI duplicado (excluyendo el propio registro)
-        if (estudianteService.existeDni(form.getDni(), form.getId())) {
-            ra.addFlashAttribute("error", "Ya existe otro estudiante con el DNI " + form.getDni() + ".");
+        if (form.getId() == null || estudianteService.buscarPorId(form.getId()).isEmpty()) {
+            ra.addFlashAttribute("error", "El estudiante no existe.");
             return "redirect:/estudiantes";
         }
-        // Validar Email duplicado (excluyendo el propio registro)
-        if (estudianteService.existeEmail(form.getEmail(), form.getId())) {
-            ra.addFlashAttribute("error", "Ya existe otro estudiante con ese email.");
-            return "redirect:/estudiantes";
+        if (!result.hasErrors()) {
+            try {
+                estudianteService.actualizar(form);
+                ra.addFlashAttribute("mensaje", "Estudiante actualizado correctamente.");
+                return "redirect:/estudiantes";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        Estudiante e = estudianteService.buscarPorId(form.getId()).orElseThrow();
-        e.setNombre(form.getNombre());
-        e.setApellido(form.getApellido());
-        e.setDni(form.getDni());
-        e.setEmail(form.getEmail());
-        e.setTelefono(form.getTelefono());
-        e.setFechaInscripcion(form.getFechaInscripcion());
-        try {
-            estudianteService.guardar(e);
-            ra.addFlashAttribute("mensaje", "Estudiante actualizado correctamente.");
-        } catch (IllegalArgumentException ex) {
-            ra.addFlashAttribute("error", ex.getMessage());
-        }
-        return "redirect:/estudiantes";
+        model.addAttribute("estudiantes", estudianteService.listarTodos());
+        return vistaLista(model, "modalEditar");
     }
 
     // ── ELIMINAR ─────────────────────────────────────────────

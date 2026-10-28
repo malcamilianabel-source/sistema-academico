@@ -20,6 +20,10 @@ public class Evaluacion {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "componente_id")
+    private ComponenteEvaluacion componente;
+
+    @ManyToOne
     @JoinColumn(name = "matricula_id", nullable = false)
     private Matricula matricula;
 

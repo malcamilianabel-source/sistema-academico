@@ -35,7 +35,7 @@
                     <h5><i class="bi bi-book-fill me-2" style="color:#B58863;"></i>Lista de Cursos</h5>
                     <div class="d-flex gap-2 flex-wrap">
                         <form th:action="@{/cursos}" method="get" class="search-form">
-                            <input type="text" name="buscar" class="form-control form-control-sm" placeholder="Buscar curso..." th:value="${buscar}">
+                            <input type="text" name="buscar" class="form-control form-control-sm" th:value="${buscar}">
                             <button type="submit" class="btn btn-sm btn-accent"><i class="bi bi-search"></i></button>
                             <a th:href="@{/cursos}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x"></i></a>
                         </form>
@@ -82,37 +82,36 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form th:action="@{/cursos/guardar}" th:object="${curso}" method="post" id="formNuevo" novalidate>
-                <div class="modal-body">
+                <div class="modal-body"><div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Nombre del Curso *</label>
-                            <input type="text" th:field="*{nombre}" class="form-control" minlength="3" maxlength="150" required>
-                            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Ingresa el nombre del curso (mínimo 3 caracteres).</div>
+                            <input type="text" th:field="*{nombre}" th:errorclass="is-invalid" class="form-control" minlength="3" maxlength="150" required>
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('nombre')} ? ${#fields.errors('nombre')[0]} : 'Ingresa el nombre del curso (mínimo 3 caracteres).'">Ingresa el nombre del curso (mínimo 3 caracteres).</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Código *</label>
-                            <input type="text" th:field="*{codigo}" class="form-control" pattern="^[A-Za-z0-9\-]{2,20}$" maxlength="20" required>
-                            <span th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Código inválido (letras, números y guiones).</div>
+                            <input type="text" th:field="*{codigo}" th:errorclass="is-invalid" class="form-control" pattern="^[A-Za-z0-9\-]{2,20}$" maxlength="20" required>
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('codigo')} ? ${#fields.errors('codigo')[0]} : 'Código inválido (letras, números y guiones).'">Código inválido (letras, números y guiones).</div>
+                            <div class="form-text">Letras, números y guiones. No se puede repetir.</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Créditos</label>
-                            <input type="number" th:field="*{creditos}" class="form-control" min="1" max="10">
-                            <span th:if="${#fields.hasErrors('creditos')}" th:errors="*{creditos}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Entre 1 y 10.</div>
+                            <input type="number" th:field="*{creditos}" th:errorclass="is-invalid" class="form-control" min="1" max="10">
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('creditos')} ? ${#fields.errors('creditos')[0]} : 'Entre 1 y 10.'">Entre 1 y 10.</div>
+                            <div class="form-text">De 1 a 10</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Ciclo</label>
-                            <input type="number" th:field="*{ciclo}" class="form-control" min="1" max="10">
-                            <span th:if="${#fields.hasErrors('ciclo')}" th:errors="*{ciclo}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Entre 1 y 10.</div>
+                            <input type="number" th:field="*{ciclo}" th:errorclass="is-invalid" class="form-control" min="1" max="10">
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('ciclo')} ? ${#fields.errors('ciclo')[0]} : 'Entre 1 y 10.'">Entre 1 y 10.</div>
+                            <div class="form-text">De 1 a 10</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Horas</label>
-                            <input type="number" th:field="*{horas}" class="form-control" min="1" max="200">
-                            <span th:if="${#fields.hasErrors('horas')}" th:errors="*{horas}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Debe ser mayor a 0.</div>
+                            <input type="number" th:field="*{horas}" th:errorclass="is-invalid" class="form-control" min="1" max="200">
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('horas')} ? ${#fields.errors('horas')[0]} : 'Debe ser mayor a 0.'">Debe ser mayor a 0.</div>
+                            <div class="form-text">De 1 a 200</div>
                         </div>
                     </div>
                 </div>
@@ -135,34 +134,36 @@
             </div>
             <form th:action="@{/cursos/actualizar}" th:object="${cursoEditar}" method="post" id="formEditar" novalidate>
                 <input type="hidden" id="editId" th:field="*{id}">
-                <div class="modal-body">
+                <div class="modal-body"><div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Nombre del Curso *</label>
-                            <input type="text" id="editNombre" th:field="*{nombre}" class="form-control" minlength="3" maxlength="150" required>
-                            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Ingresa el nombre del curso.</div>
+                            <input type="text" id="editNombre" th:field="*{nombre}" th:errorclass="is-invalid" class="form-control" minlength="3" maxlength="150" required>
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('nombre')} ? ${#fields.errors('nombre')[0]} : 'Ingresa el nombre del curso.'">Ingresa el nombre del curso.</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Código *</label>
-                            <input type="text" id="editCodigo" th:field="*{codigo}" class="form-control" pattern="^[A-Za-z0-9\-]{2,20}$" maxlength="20" required>
-                            <span th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Código inválido.</div>
+                            <input type="text" id="editCodigo" th:field="*{codigo}" th:errorclass="is-invalid" class="form-control" pattern="^[A-Za-z0-9\-]{2,20}$" maxlength="20" required>
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('codigo')} ? ${#fields.errors('codigo')[0]} : 'Código inválido.'">Código inválido.</div>
+                            <div class="form-text">Letras, números y guiones. No se puede repetir.</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Créditos</label>
-                            <input type="number" id="editCreditos" th:field="*{creditos}" class="form-control" min="1" max="10">
-                            <span th:if="${#fields.hasErrors('creditos')}" th:errors="*{creditos}" class="text-danger small"></span>
+                            <input type="number" id="editCreditos" th:field="*{creditos}" th:errorclass="is-invalid" class="form-control" min="1" max="10">
+                            <div class="invalid-feedback" th:errors="*{creditos}"></div>
+                            <div class="form-text">De 1 a 10</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Ciclo</label>
-                            <input type="number" id="editCiclo" th:field="*{ciclo}" class="form-control" min="1" max="10">
-                            <span th:if="${#fields.hasErrors('ciclo')}" th:errors="*{ciclo}" class="text-danger small"></span>
+                            <input type="number" id="editCiclo" th:field="*{ciclo}" th:errorclass="is-invalid" class="form-control" min="1" max="10">
+                            <div class="invalid-feedback" th:errors="*{ciclo}"></div>
+                            <div class="form-text">De 1 a 10</div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Horas</label>
-                            <input type="number" id="editHoras" th:field="*{horas}" class="form-control" min="1" max="200">
-                            <span th:if="${#fields.hasErrors('horas')}" th:errors="*{horas}" class="text-danger small"></span>
+                            <input type="number" id="editHoras" th:field="*{horas}" th:errorclass="is-invalid" class="form-control" min="1" max="200">
+                            <div class="invalid-feedback" th:errors="*{horas}"></div>
+                            <div class="form-text">De 1 a 200</div>
                         </div>
                     </div>
                 </div>
@@ -176,6 +177,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/formularios.js}"></script>
 <script>
     // Sidebar toggle
     const sidebar = document.getElementById('sidebar');

@@ -3,9 +3,7 @@ package com.academic.controller;
 import com.academic.model.Evaluacion;
 import com.academic.model.Matricula;
 import com.academic.model.Usuario;
-import com.academic.service.DocenteService;
-import com.academic.service.EvaluacionService;
-import com.academic.service.MatriculaService;
+import com.academic.service.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +20,18 @@ import java.time.LocalDate;
 public class EvaluacionController {
 
     private static final String SIN_PERMISO = "Solo puedes gestionar calificaciones de tus propios cursos.";
+    private static final String SOLO_ACTIVAS =
+            "Solo se pueden registrar o cambiar notas de matrículas activas. Pide al administrador cualquier corrección.";
 
     @Autowired
     private EvaluacionService evaluacionService;
 
     @Autowired
+    private ComponenteEvaluacionService componentes;
+    
+    @Autowired
     private MatriculaService matriculaService;
+    @Autowired private CursoPeriodoService cursoPeriodoService;
 
     @Autowired
     private DocenteService docenteService;
@@ -51,21 +55,38 @@ public class EvaluacionController {
             return vistaLista((Usuario) session.getAttribute("usuario"), model, "modalNuevo");
         }
 
+        Matricula matricula = matriculaService.buscarPorId(matriculaId).orElse(null);
+        if (matricula == null) {
+            result.rejectValue("matricula.id", "NoExiste", "La matrícula seleccionada no existe.");
+            return vistaLista((Usuario) session.getAttribute("usuario"), model, "modalNuevo");
+        }
+        if (!puedeGestionar(session, matricula)) {
+            ra.addFlashAttribute("error", SIN_PERMISO);
+            return "redirect:/evaluaciones";
+        }
+        if (!puedeCalificar(session, matricula)) {
+            result.rejectValue("matricula.id", "NoActiva", SOLO_ACTIVAS);
+            return vistaLista((Usuario) session.getAttribute("usuario"), model, "modalNuevo");
+        }
         try {
-            Matricula matricula = matriculaService.buscarPorId(matriculaId).orElseThrow();
-            if (!puedeGestionar(session, matricula)) {
-                ra.addFlashAttribute("error", SIN_PERMISO);
-                return "redirect:/evaluaciones";
-            }
             evaluacion.setId(null);
             evaluacion.setMatricula(matricula);
+            if (evaluacion.getComponente()!=null && evaluacion.getComponente().getId()!=null) {
+                var componente=componentes.buscar(evaluacion.getComponente().getId());
+                if(!componente.getCursoPeriodo().getId().equals(matricula.getCursoPeriodo().getId())) {
+                    result.rejectValue("componente.id","NoCorresponde","La evaluación no pertenece a esta sección.");
+                    return vistaLista((Usuario)session.getAttribute("usuario"),model,"modalNuevo");
+                }
+                evaluacion.setComponente(componente);evaluacion.setTipoEvaluacion(componente.getNombre());
+            }
             if (evaluacion.getFecha() == null) evaluacion.setFecha(LocalDate.now());
             evaluacionService.guardar(evaluacion);
             ra.addFlashAttribute("mensaje", "Calificación registrada correctamente.");
+            return "redirect:/evaluaciones";
         } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            Formularios.rechazar(result, e);
+            return vistaLista((Usuario) session.getAttribute("usuario"), model, "modalNuevo");
         }
-        return "redirect:/evaluaciones";
     }
 
     @GetMapping("/editar/{id}")
@@ -88,7 +109,11 @@ public class EvaluacionController {
                 ra.addFlashAttribute("error", SIN_PERMISO);
                 return "redirect:/evaluaciones";
             }
-            evaluacion.setTipoEvaluacion(form.getTipoEvaluacion());
+            if (!puedeCalificar(session, evaluacion.getMatricula())) {
+                ra.addFlashAttribute("error", SOLO_ACTIVAS);
+                return "redirect:/evaluaciones";
+            }
+            evaluacion.setTipoEvaluacion(evaluacion.getComponente()!=null ? evaluacion.getComponente().getNombre() : form.getTipoEvaluacion());
             evaluacion.setNota(form.getNota());
             evaluacion.setFecha(form.getFecha());
             evaluacionService.guardar(evaluacion);
@@ -106,6 +131,10 @@ public class EvaluacionController {
             ra.addFlashAttribute("error", SIN_PERMISO);
             return "redirect:/evaluaciones";
         }
+        if (evaluacion != null && !puedeCalificar(session, evaluacion.getMatricula())) {
+            ra.addFlashAttribute("error", SOLO_ACTIVAS);
+            return "redirect:/evaluaciones";
+        }
         evaluacionService.eliminar(id);
         ra.addFlashAttribute("mensaje", "Calificación eliminada correctamente.");
         return "redirect:/evaluaciones";
@@ -116,7 +145,9 @@ public class EvaluacionController {
         // Un docente solo ve las calificaciones y matrículas de los cursos que dicta
         if (esDocente(usuario)) {
             model.addAttribute("evaluaciones", evaluacionService.listarPorDocente(usuario.getId()));
-            model.addAttribute("matriculas", matriculaService.listarPorDocente(usuario.getId()));
+            // Para registrar notas el docente solo ve matrículas activas
+            model.addAttribute("matriculas", matriculaService.listarPorDocente(usuario.getId()).stream()
+                    .filter(m -> "ACTIVO".equals(m.getEstado())).toList());
             if (docenteService.buscarPorUsuario(usuario.getId()).isEmpty()) {
                 model.addAttribute("aviso", "Tu usuario no está vinculado a ningún docente. "
                         + "Pide al administrador que registre un docente con tu mismo correo.");
@@ -128,10 +159,13 @@ public class EvaluacionController {
         if (!model.containsAttribute("evaluacion")) {
             Evaluacion nueva = new Evaluacion();
             nueva.setMatricula(new Matricula());
+            nueva.setComponente(new com.academic.model.ComponenteEvaluacion());
             model.addAttribute("evaluacion", nueva);
         }
         if (!model.containsAttribute("evaluacionEditar")) model.addAttribute("evaluacionEditar", new Evaluacion());
         model.addAttribute("abrirModal", abrirModal);
+        model.addAttribute("componentesDisponibles", componentes.todos());
+        model.addAttribute("seccionesDisponibles", esDocente(usuario) ? cursoPeriodoService.listarDeDocente(usuario.getId()) : cursoPeriodoService.listarTodos());
         model.addAttribute("paginaActual", "evaluaciones");
         return "evaluaciones/lista";
     }
@@ -140,12 +174,22 @@ public class EvaluacionController {
         return "DOCENTE".equalsIgnoreCase(usuario.getRol());
     }
 
+    /**
+     * El docente solo registra, cambia o borra notas de matrículas ACTIVAS; las de matrículas retiradas
+     * o culminadas forman parte del historial. El administrador puede corregirlas.
+     */
+    private boolean puedeCalificar(HttpSession session, Matricula matricula) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) return false;
+        return !esDocente(usuario) || ("ACTIVO".equals(matricula.getEstado()) && !matricula.getCursoPeriodo().getPeriodo().isCerrado());
+    }
+
     /** El administrador gestiona cualquier calificación; el docente, solo las de sus cursos. */
     private boolean puedeGestionar(HttpSession session, Matricula matricula) {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario == null) return false;
         if (!esDocente(usuario)) return true;
-        Usuario titular = matricula.getCursoPeriodo().getDocente().getUsuario();
-        return titular != null && titular.getId().equals(usuario.getId());
+        // Titular o docente de apoyo de la sección
+        return cursoPeriodoService.dictaSeccion(usuario.getId(), matricula.getCursoPeriodo());
     }
 }

@@ -30,6 +30,14 @@ public class EvaluacionService {
         Validaciones.exigir(evaluacion.getNota() != null
                         && evaluacion.getNota() >= 0 && evaluacion.getNota() <= 20,
                 "La nota debe estar entre 0 y 20");
+        if(evaluacion.getComponente()!=null && evaluacion.getComponente().getId()!=null){
+            Long comp=evaluacion.getComponente().getId();
+            Long mat=evaluacion.getMatricula().getId();
+            boolean duplicado=repository.findByMatriculaId(mat).stream()
+                .anyMatch(e->e.getComponente()!=null && comp.equals(e.getComponente().getId())
+                    && (evaluacion.getId()==null || !evaluacion.getId().equals(e.getId())));
+            Validaciones.exigir(!duplicado,"Ya existe una nota para esta evaluación y estudiante.");
+        }
         return repository.save(evaluacion);
     }
 

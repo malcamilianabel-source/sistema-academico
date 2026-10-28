@@ -45,7 +45,7 @@ public class Estudiante {
     private String email;
 
     @Pattern(regexp = "\\d{9}", message = "Teléfono debe tener 9 dígitos")
-    @Column(length = 20)
+    @Column(length = 20, unique = true)
     private String telefono;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

@@ -86,7 +86,12 @@ body {
     padding: 1rem 1.2rem;
     border-top: 1px solid var(--color-secondary);
 }
-.sidebar-footer a {
+.sidebar-footer a,
+.sidebar-footer button {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
     color: var(--color-mid);
     font-size: 0.82rem;
     text-decoration: none;
@@ -95,7 +100,8 @@ body {
     gap: 0.5rem;
     transition: color 0.2s;
 }
-.sidebar-footer a:hover { color: #fff; }
+.sidebar-footer a:hover,
+.sidebar-footer button:hover { color: #fff; }
 
 /* ── OVERLAY (mobile) ─────────────────────────────────── */
 #sidebar-overlay {
@@ -407,3 +413,24 @@ body {
     /* Top navbar title aún más pequeño */
     .top-navbar .page-title { font-size: 0.85rem; }
 }
+
+/* ── Validación de formularios ─────────────────────────────────────────
+   Solo se marca en rojo lo que está mal. El navegador no puede saber si un DNI,
+   email o teléfono ya existe, así que no se muestra un check verde que lo dé por bueno. */
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+    border-color: var(--bs-border-color);
+    background-image: none;
+    padding-right: 0.75rem;
+}
+.was-validated .form-select:valid:not([multiple]):not([size]) {
+    --bs-form-select-bg-icon: none;
+    background-image: var(--bs-form-select-bg-img);
+    padding-right: 2.25rem;
+}
+.was-validated .form-control:valid:focus,
+.was-validated .form-select:valid:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.form-text { font-size: 0.78rem; color: #A79E9C; }

@@ -29,15 +29,15 @@
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-clipboard-check me-2" style="color:#B58863;"></i>Selecciona una sesión</h5>
-                    <a th:if="${session.usuario.rol == 'ADMIN'}" th:href="@{/sesiones/nuevo}" class="btn btn-sm btn-accent"><i class="bi bi-plus-lg me-1"></i> Nueva Sesión</a>
                 </div>
+                <div class="row g-2 p-3"><div class="col-md-4"><label for="asistenciaPeriodo" class="form-label">Periodo</label><select id="asistenciaPeriodo" class="form-select"><option value="">Todos</option></select></div><div class="col-md-4"><label for="asistenciaCurso" class="form-label">Curso</label><select id="asistenciaCurso" class="form-select"><option value="">Todos</option></select></div><div class="col-md-4"><label for="asistenciaSeccion" class="form-label">Sección</label><select id="asistenciaSeccion" class="form-select"><option value="">Todas</option></select></div></div>
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead><tr><th>Fecha</th><th>Curso</th><th class="col-hide-sm">Docente</th><th class="col-hide-sm">Aula</th><th>Estado</th><th></th></tr></thead>
                         <tbody>
-                        <tr th:each="s : ${sesiones}" th:with="total=${asistenciasPorSesion.getOrDefault(s.id, 0L)}">
+                        <tr class="fila-asistencia" th:each="s : ${sesiones}" th:attr="data-periodo=${s.cursoPeriodo.periodo.nombre},data-curso=${s.cursoPeriodo.curso.nombre},data-seccion=${s.cursoPeriodo.seccion}" th:with="total=${asistenciasPorSesion.getOrDefault(s.id, 0L)}">
                             <td th:text="${#temporals.format(s.fechaSesion, 'dd/MM/yyyy')}"></td>
-                            <td th:text="${s.cursoPeriodo.curso.nombre + ' (' + s.cursoPeriodo.periodo.nombre + ')'}"></td>
+                            <td th:text="${s.cursoPeriodo.curso.nombre + ' · Secc. ' + s.cursoPeriodo.seccion + ' (' + s.cursoPeriodo.periodo.nombre + ')'}"></td>
                             <td class="col-hide-sm" th:text="${s.cursoPeriodo.docente.nombre + ' ' + s.cursoPeriodo.docente.apellido}"></td>
                             <td class="col-hide-sm" th:text="${s.aula + ' · ' + s.tipo}"></td>
                             <td>
@@ -58,7 +58,11 @@
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">    (function(){const filas=[...document.querySelectorAll('.fila-asistencia')];const periodo=document.getElementById('asistenciaPeriodo'),curso=document.getElementById('asistenciaCurso'),seccion=document.getElementById('asistenciaSeccion');
+    function poblar(select,values){let antes=select.value;select.replaceChildren(new Option('Todos',''));[...new Set(values)].sort().forEach(v=>select.add(new Option(v,v)));select.value=[...select.options].some(o=>o.value===antes)?antes:'';}
+    function filtrar(){let visibles=filas.filter(f=>(!periodo.value||f.dataset.periodo===periodo.value));poblar(curso,visibles.map(f=>f.dataset.curso));visibles=visibles.filter(f=>!curso.value||f.dataset.curso===curso.value);poblar(seccion,visibles.map(f=>f.dataset.seccion));filas.forEach(f=>f.hidden=!( (!periodo.value||f.dataset.periodo===periodo.value)&&(!curso.value||f.dataset.curso===curso.value)&&(!seccion.value||f.dataset.seccion===seccion.value)));}
+    poblar(periodo,filas.map(f=>f.dataset.periodo));periodo.onchange=()=>{curso.value='';seccion.value='';filtrar()};curso.onchange=()=>{seccion.value='';filtrar()};seccion.onchange=filtrar;filtrar()})();
+</script>
 <script>
     const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
     if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});

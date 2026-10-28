@@ -37,6 +37,14 @@ public class HistorialController {
                 model.addAttribute("aviso", "Tu usuario no está vinculado a ningún estudiante. "
                         + "Pide al administrador que registre un estudiante con tu mismo correo.");
             }
+        } else if ("DOCENTE".equalsIgnoreCase(usuario.getRol())) {
+            var permitidos = matriculaService.listarPorDocente(usuario.getId()).stream()
+                    .map(Matricula -> Matricula.getEstudiante()).distinct().toList();
+            model.addAttribute("estudiantes", permitidos);
+            if (estudianteId != null && permitidos.stream().noneMatch(e -> estudianteId.equals(e.getId()))) {
+                return "redirect:/acceso-denegado";
+            }
+            estudiante = estudianteId != null ? estudianteService.buscarPorId(estudianteId).orElse(null) : null;
         } else {
             model.addAttribute("estudiantes", estudianteService.listarTodos());
             estudiante = estudianteId != null ? estudianteService.buscarPorId(estudianteId).orElse(null) : null;

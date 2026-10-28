@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asignaciones - Sistema Académico</title>
+    <title>Secciones - Sistema Académico</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
     <link th:href="@{/css/estilos.css}" rel="stylesheet">
@@ -12,10 +12,11 @@
 <div id="sidebar-overlay"></div>
 <div class="d-flex">
     <div th:replace="~{fragments/sidebar :: sidebar}"></div>
-    <div id="main-content" class="flex-grow-1">        <div class="top-navbar">
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
             <div class="d-flex align-items-center gap-2">
                 <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
-                <h1 class="page-title"><i class="bi bi-person-check-fill me-2"></i>Asignaciones</h1>
+                <h1 class="page-title"><i class="bi bi-diagram-3-fill me-2"></i>Secciones y docentes</h1>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
@@ -27,55 +28,101 @@
             <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
             <div class="tabla-container">
                 <div class="tabla-header">
-                    <h5><i class="bi bi-person-check-fill me-2" style="color:#B58863;"></i>Lista de Asignaciones</h5>
-                    <button th:if="${session.usuario.rol == 'ADMIN'}" class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo"><i class="bi bi-plus-lg me-1"></i> Nueva Asignación</button>
+                    <h5 th:text="${session.usuario.rol == 'DOCENTE'} ? 'Mis secciones' : 'Secciones del periodo'">Secciones</h5>
+                    <div class="d-flex gap-2 flex-wrap" th:if="${session.usuario.rol == 'ADMIN'}">
+                        <form th:action="@{/asignaciones}" method="get" class="d-flex gap-2">
+                            <select name="periodoId" class="form-select form-select-sm" style="width:200px;" onchange="this.form.submit()" aria-label="Filtrar por periodo">
+                                <option value="" th:selected="${periodoId == null}">Todos los periodos</option>
+                                <option th:each="p : ${periodos}" th:value="${p.id}" th:selected="${p.id == periodoId}"
+                                        th:text="${p.nombre + ' · ' + #strings.capitalize(#strings.toLowerCase(p.estado))}"></option>
+                            </select>
+                            <noscript><button type="submit" class="btn btn-sm btn-accent">Ver</button></noscript>
+                        </form>
+                        <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNuevo"><i class="bi bi-plus-lg me-1"></i> Nueva sección</button>
+                    </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table mb-0">
-                        <thead><tr><th>#</th><th>Curso</th><th class="col-hide-sm">Código</th><th>Docente</th><th>Periodo</th><th th:if="${session.usuario.rol == 'ADMIN'}">Acciones</th></tr></thead>
+                    <table class="table mb-0 align-middle">
+                        <thead><tr><th>Curso</th><th>Sección</th><th class="col-hide-sm">Periodo</th><th>Docentes</th><th>Matriculados</th><th th:if="${session.usuario.rol == 'ADMIN'}">Acciones</th></tr></thead>
                         <tbody>
-                        <tr th:each="a, stat : ${asignaciones}">
-                            <td th:text="${stat.count}"></td><td th:text="${a.curso.nombre}"></td>
-                            <td class="col-hide-sm" th:text="${a.curso.codigo}"></td>
-                            <td th:text="${a.docente.nombre + ' ' + a.docente.apellido}"></td>
-                            <td th:text="${a.periodo.nombre}"></td>
-                            <td th:if="${session.usuario.rol == 'ADMIN'}">
-                                <button class="btn btn-edit btn-sm me-1" th:onclick="'cargarEditar(' + ${a.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar"><i class="bi bi-pencil-fill"></i></button>
-                                <form th:action="@{/asignaciones/eliminar/{id}(id=${a.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta asignación?')"><button type="submit" class="btn btn-delete btn-sm"><i class="bi bi-trash-fill"></i></button></form>
+                        <tr th:each="a : ${asignaciones}" th:with="cerrado=${a.periodo.cerrado}, inscritos=${matriculados.getOrDefault(a.id, 0L)}">
+                            <td><span class="badge me-1" style="background-color:#3D4D55;" th:text="${a.curso.codigo}"></span><span th:text="${a.curso.nombre}"></span></td>
+                            <td><span class="badge" style="background-color:#B58863;" th:text="${a.seccion}"></span></td>
+                            <td class="col-hide-sm"><span th:text="${a.periodo.nombre}"></span>
+                                <span th:if="${cerrado}" class="badge bg-secondary ms-1">Cerrado</span></td>
+                            <td>
+                                <div th:each="d : ${docentesPorSeccion.get(a.id)}" class="d-flex align-items-center gap-1 mb-1">
+                                    <span th:text="${d.docente.nombre + ' ' + d.docente.apellido}"></span>
+                                    <span th:if="${d.titular}" class="badge bg-success-subtle text-success-emphasis">Titular</span>
+                                    <span th:unless="${d.titular}" class="badge bg-light text-secondary border">Apoyo</span>
+                                    <form th:if="${session.usuario.rol == 'ADMIN' and !d.titular and d.id != null and !cerrado}"
+                                          th:action="@{/asignaciones/{id}/docentes/{asig}/quitar(id=${a.id},asig=${d.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Quitar a este docente de la sección?')">
+                                        <button type="submit" class="btn btn-link btn-sm p-0 text-danger" title="Quitar docente"><i class="bi bi-x-circle"></i></button>
+                                    </form>
+                                </div>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" th:href="@{/contenido-curso/{id}(id=${a.id})}"><i class="bi bi-journal-text me-1"></i> Contenido semanal</a>
+                            </td>
+                            <td><span th:text="${inscritos + ' / ' + a.vacantes}"></span>
+                                <span th:if="${inscritos >= a.vacantes}" class="badge bg-secondary ms-1">Llena</span></td>
+                            <td th:if="${session.usuario.rol == 'ADMIN'}" class="text-nowrap">
+                                <th:block th:unless="${cerrado}">
+                                    <button type="button" class="btn btn-sm btn-accent me-1" title="Asignar docente"
+                                            th:attr="data-id=${a.id},data-etiqueta=${a.etiqueta}" onclick="abrirDocente(this)"><i class="bi bi-person-plus-fill"></i></button>
+                                    <button type="button" class="btn btn-edit btn-sm me-1" title="Editar sección"
+                                            th:onclick="'cargarEditar(' + ${a.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar"><i class="bi bi-pencil-fill"></i></button>
+                                </th:block>
+                                <form th:action="@{/asignaciones/eliminar/{id}(id=${a.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta sección?')"><button type="submit" class="btn btn-delete btn-sm" title="Eliminar sección"><i class="bi bi-trash-fill"></i></button></form>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(asignaciones)}"><td colspan="6" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay asignaciones.</td></tr>
+                        <tr th:if="${#lists.isEmpty(asignaciones)}"><td colspan="6" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay secciones en este periodo.</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+            <p class="small mt-2 mb-0" style="color:#A79E9C;">Cada sección tiene un docente titular y puede tener docentes de apoyo. Los periodos cerrados quedan solo para consulta.</p>
         </div>
     </div>
 </div>
 
-<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nueva Asignación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/asignaciones/guardar}" method="post" id="formNuevo" novalidate><div class="modal-body">
+<!-- ══ NUEVA SECCIÓN ══ -->
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-plus-square me-2"></i>Nueva sección</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form th:action="@{/asignaciones/guardar}" th:object="${seccionForm}" method="post" id="formNuevo" novalidate><div class="modal-body">
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
+        <div class="mb-3"><label class="form-label">Periodo *</label>
+            <select th:field="*{periodoId}" th:errorclass="is-invalid" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                <option th:each="p : ${periodos}" th:unless="${p.cerrado}" th:value="${p.id}" th:text="${p.nombre + ' · ' + #strings.capitalize(#strings.toLowerCase(p.estado))}"></option>
+            </select>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('periodoId')} ? ${#fields.errors('periodoId')[0]} : 'Selecciona un periodo.'">Selecciona un periodo.</div>
+            <div class="form-text">Solo periodos planificados o activos.</div>
+        </div>
         <div class="mb-3"><label class="form-label">Curso *</label>
-            <select name="cursoId" class="form-select" required>
+            <select th:field="*{cursoId}" th:errorclass="is-invalid" class="form-select" required>
                 <option value="">Seleccionar...</option>
                 <option th:each="c : ${cursos}" th:value="${c.id}" th:text="${c.codigo + ' — ' + c.nombre}"></option>
             </select>
-            <div class="invalid-feedback">Selecciona un curso.</div>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('cursoId')} ? ${#fields.errors('cursoId')[0]} : 'Selecciona un curso.'">Selecciona un curso.</div>
         </div>
-        <div class="mb-3"><label class="form-label">Docente *</label>
-            <select name="docenteId" class="form-select" required>
-                <option value="">Seleccionar...</option>
-                <option th:each="d : ${docentes}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"></option>
-            </select>
-            <div class="invalid-feedback">Selecciona un docente.</div>
+        <div class="row g-3 mb-3">
+            <div class="col-6"><label class="form-label">Sección</label>
+                <input type="text" th:field="*{seccion}" th:errorclass="is-invalid" class="form-control text-uppercase" maxlength="2" pattern="^[A-Za-z]{1,2}$" title="Una o dos letras (A, B, C...).">
+                <div class="invalid-feedback" th:text="${#fields.hasErrors('seccion')} ? ${#fields.errors('seccion')[0]} : 'Una o dos letras (A, B, C...).'">Una o dos letras (A, B, C...).</div>
+                <div class="form-text">Vacío = siguiente letra libre.</div>
+            </div>
+            <div class="col-6"><label class="form-label">Vacantes *</label>
+                <input type="number" th:field="*{vacantes}" th:errorclass="is-invalid" class="form-control" min="1" max="500" required>
+                <div class="invalid-feedback" th:text="${#fields.hasErrors('vacantes')} ? ${#fields.errors('vacantes')[0]} : 'Entre 1 y 500.'">Entre 1 y 500.</div>
+            </div>
         </div>
-        <div class="mb-3"><label class="form-label">Periodo *</label>
-            <select name="periodoId" class="form-select" required>
+        <div class="mb-1"><label class="form-label">Docente titular *</label>
+            <select th:field="*{docenteId}" th:errorclass="is-invalid" class="form-select" required>
                 <option value="">Seleccionar...</option>
-                <option th:each="p : ${periodos}" th:value="${p.id}" th:text="${p.nombre}"></option>
+                <option th:each="d : ${docentes}" th:value="${d.id}" th:text="${d.apellido + ', ' + d.nombre + (d.especialidad != null ? ' · ' + d.especialidad : '')}"></option>
             </select>
-            <div class="invalid-feedback">Selecciona un periodo.</div>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('docenteId')} ? ${#fields.errors('docenteId')[0]} : 'Selecciona el docente titular.'">Selecciona el docente titular.</div>
+            <div class="form-text">Después puedes agregar docentes de apoyo.</div>
         </div>
     </div><div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -83,25 +130,25 @@
     </div></form>
 </div></div></div>
 
-<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Asignación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/asignaciones/actualizar}" method="post" id="formEditar" novalidate><input type="hidden" name="id" id="editId">
+<!-- ══ EDITAR SECCIÓN ══ -->
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar sección</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form th:action="@{/asignaciones/actualizar}" th:object="${seccionEditar}" method="post" id="formEditar" novalidate><input type="hidden" th:field="*{id}" id="editId">
         <div class="modal-body">
-            <div class="mb-3"><label class="form-label">Curso *</label>
-                <select name="cursoId" id="editCursoId" class="form-select" required>
-                    <option th:each="c : ${cursos}" th:value="${c.id}" th:text="${c.codigo + ' — ' + c.nombre}"></option>
-                </select>
+            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
+            <p class="fw-semibold mb-3" id="editEtiqueta" th:text="${etiquetaEditar}"></p>
+            <div class="row g-3">
+                <div class="col-6"><label class="form-label">Sección *</label>
+                    <input type="text" th:field="*{seccion}" th:errorclass="is-invalid" id="editSeccion" class="form-control text-uppercase" maxlength="2" pattern="^[A-Za-z]{1,2}$" title="Una o dos letras (A, B, C...)." required>
+                    <div class="invalid-feedback" th:text="${#fields.hasErrors('seccion')} ? ${#fields.errors('seccion')[0]} : 'Una o dos letras (A, B, C...).'">Una o dos letras (A, B, C...).</div>
+                </div>
+                <div class="col-6"><label class="form-label">Vacantes *</label>
+                    <input type="number" th:field="*{vacantes}" th:errorclass="is-invalid" id="editVacantes" class="form-control" min="1" max="500" required>
+                    <div class="invalid-feedback" th:text="${#fields.hasErrors('vacantes')} ? ${#fields.errors('vacantes')[0]} : 'Entre 1 y 500.'">Entre 1 y 500.</div>
+                    <div class="form-text">No menos que los matriculados.</div>
+                </div>
             </div>
-            <div class="mb-3"><label class="form-label">Docente *</label>
-                <select name="docenteId" id="editDocenteId" class="form-select" required>
-                    <option th:each="d : ${docentes}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"></option>
-                </select>
-            </div>
-            <div class="mb-3"><label class="form-label">Periodo *</label>
-                <select name="periodoId" id="editPeriodoId" class="form-select" required>
-                    <option th:each="p : ${periodos}" th:value="${p.id}" th:text="${p.nombre}"></option>
-                </select>
-            </div>
+            <div class="form-text mt-3">El curso y el periodo no se cambian porque la sección puede tener matrículas.</div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -109,29 +156,66 @@
         </div>
     </form>
 </div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
 
-    // Sidebar toggle
+<!-- ══ ASIGNAR DOCENTE ══ -->
+<div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalDocente" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Asignar docente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form th:action="@{/asignaciones/0/docentes}" method="post" id="formDocente" novalidate>
+        <div class="modal-body">
+            <p class="fw-semibold mb-3" id="docenteEtiqueta"></p>
+            <div class="mb-3"><label class="form-label">Docente *</label>
+                <select name="docenteId" class="form-select" required>
+                    <option value="">Seleccionar...</option>
+                    <option th:each="d : ${docentes}" th:value="${d.id}" th:text="${d.apellido + ', ' + d.nombre + (d.especialidad != null ? ' · ' + d.especialidad : '')}"></option>
+                </select>
+                <div class="invalid-feedback">Selecciona un docente.</div>
+            </div>
+            <div><label class="form-label d-block">Rol *</label>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="rol" id="rolApoyo" value="APOYO" checked><label class="form-check-label" for="rolApoyo">Apoyo</label></div>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="rol" id="rolTitular" value="TITULAR"><label class="form-check-label" for="rolTitular">Titular</label></div>
+                <div class="form-text">Si eliges titular, el titular actual pasa a ser de apoyo.</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-save me-1"></i>Asignar</button>
+        </div>
+    </form>
+</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/formularios.js}"></script>
+<script>
     const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
     if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
     if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
-    // Validacion
-    function activarVal(...ids){ids.forEach(fid=>{const f=document.getElementById(fid);if(!f)return;f.addEventListener('submit',e=>{if(!f.checkValidity()){e.preventDefault();e.stopPropagation();}f.classList.add('was-validated');});f.closest('.modal')?.addEventListener('hidden.bs.modal',()=>f.classList.remove('was-validated'));});}
-    function soloNum(e){e.target.value=e.target.value.replace(/[^0-9]/g,'');}
 
+    ['formNuevo','formEditar','formDocente'].forEach(fid => {
+        const f = document.getElementById(fid);
+        if (!f) return;
+        f.addEventListener('submit', e => { if (!f.checkValidity()) { e.preventDefault(); e.stopPropagation(); } f.classList.add('was-validated'); });
+    });
 
-    function cargarEditar(id){
-        fetch('/asignaciones/editar/'+id).then(r=>r.json()).then(a=>{
-            document.getElementById('editId').value=a.id;
-            document.getElementById('editCursoId').value=a.curso.id;
-            document.getElementById('editDocenteId').value=a.docente.id;
-            document.getElementById('editPeriodoId').value=a.periodo.id;
-            document.getElementById('formEditar').classList.remove('was-validated');
+    function cargarEditar(id) {
+        fetch('/asignaciones/editar/' + id).then(r => r.json()).then(s => {
+            document.getElementById('editId').value = s.id;
+            document.getElementById('editSeccion').value = s.seccion;
+            document.getElementById('editVacantes').value = s.vacantes;
+            document.getElementById('editEtiqueta').textContent = s.etiqueta;
         });
     }
-    activarVal('formNuevo','formEditar');
 
+    function abrirDocente(boton) {
+        const form = document.getElementById('formDocente');
+        form.action = '/asignaciones/' + boton.dataset.id + '/docentes';
+        document.getElementById('docenteEtiqueta').textContent = boton.dataset.etiqueta;
+        form.reset();
+        new bootstrap.Modal(document.getElementById('modalDocente')).show();
+    }
+</script>
+<script th:inline="javascript">
+    const abrirModal = /*[[${abrirModal}]]*/ null;
+    if (abrirModal) new bootstrap.Modal(document.getElementById(abrirModal)).show();
 </script>
 </body>
 </html>

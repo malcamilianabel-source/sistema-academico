@@ -10,6 +10,7 @@ import java.util.List;
 @Repository
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     List<Asistencia> findBySesionId(Long sesionId);
+    List<Asistencia> findByMatriculaIdOrderBySesionFechaSesionAsc(Long matriculaId);
     @Query("select a.sesion.id, count(a) from Asistencia a group by a.sesion.id")
     List<Object[]> contarAgrupadoPorSesion();
 }

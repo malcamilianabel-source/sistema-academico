@@ -29,45 +29,44 @@
                       th:object="${sesion}" method="post" id="formSesion" novalidate>
                     <input type="hidden" th:field="*{id}">
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">Curso / Periodo *</label>
-                            <select th:field="*{cursoPeriodo.id}" class="form-select" required>
-                                <option value="">Seleccionar...</option>
-                                <option th:each="cp : ${cursosPeriodo}" th:value="${cp.id}"
-                                        th:text="${cp.curso.codigo + ' — ' + cp.curso.nombre + ' | ' + cp.periodo.nombre + ' | ' + cp.docente.nombre + ' ' + cp.docente.apellido}"></option>
-                            </select>
-                            <span th:if="${#fields.hasErrors('cursoPeriodo.id')}" th:errors="*{cursoPeriodo.id}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Selecciona un curso.</div>
-                        </div>
+                        <div class="col-md-4"><label class="form-label" for="periodoFiltro">Periodo</label>
+                            <select class="form-select" id="periodoFiltro"><option value="">Selecciona periodo</option></select></div>
+                        <div class="col-md-4"><label class="form-label" for="cursoFiltro">Curso</label>
+                            <select class="form-select" id="cursoFiltro"><option value="">Selecciona curso</option></select></div>
+                        <div class="col-md-4"><label class="form-label">Sección *</label>
+                            <select th:field="*{cursoPeriodo.id}" th:errorclass="is-invalid" id="seccionFiltro" class="form-select" required>
+                                <option value="">Selecciona sección</option>
+                                <option th:each="cp : ${cursosPeriodo}" th:value="${cp.id}" th:text="${'Sección ' + cp.seccion}"
+                                  th:attr="data-periodo=${cp.periodo.id},data-periodo-nombre=${cp.periodo.nombre},data-curso=${cp.curso.id},data-curso-nombre=${cp.curso.nombre},data-docente=${cp.docente.nombre + ' ' + cp.docente.apellido}"></option>
+                            </select><div class="invalid-feedback" th:errors="*{cursoPeriodo.id}"></div></div>
+                        <div class="col-12"><div id="datosSeccion" class="small text-muted" aria-live="polite"></div></div>
                         <div class="col-md-4">
                             <label class="form-label">Fecha *</label>
-                            <input type="date" th:field="*{fechaSesion}" class="form-control" required>
-                            <span th:if="${#fields.hasErrors('fechaSesion')}" th:errors="*{fechaSesion}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Ingresa la fecha de la sesión.</div>
+                            <input type="date" th:field="*{fechaSesion}" th:errorclass="is-invalid" class="form-control" required>
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('fechaSesion')} ? ${#fields.errors('fechaSesion')[0]} : 'Ingresa la fecha de la sesión.'">Ingresa la fecha de la sesión.</div>
                         </div>
                         <div class="col-6 col-md-4">
                             <label class="form-label">Hora inicio</label>
-                            <input type="time" th:field="*{horaInicio}" class="form-control">
-                            <span th:if="${#fields.hasErrors('horaInicio')}" th:errors="*{horaInicio}" class="text-danger small"></span>
+                            <input type="time" th:field="*{horaInicio}" th:errorclass="is-invalid" class="form-control">
+                            <div class="invalid-feedback" th:errors="*{horaInicio}"></div>
                         </div>
                         <div class="col-6 col-md-4">
                             <label class="form-label">Hora fin</label>
-                            <input type="time" th:field="*{horaFin}" class="form-control">
-                            <span th:if="${#fields.hasErrors('horaFin')}" th:errors="*{horaFin}" class="text-danger small"></span>
+                            <input type="time" th:field="*{horaFin}" th:errorclass="is-invalid" class="form-control">
+                            <div class="invalid-feedback" th:errors="*{horaFin}"></div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Aula *</label>
-                            <input type="text" th:field="*{aula}" class="form-control" maxlength="50" placeholder="Ej: A-201 o enlace de Meet" required>
-                            <span th:if="${#fields.hasErrors('aula')}" th:errors="*{aula}" class="text-danger small"></span>
-                            <div class="invalid-feedback">Ingresa el aula.</div>
+                            <input type="text" th:field="*{aula}" th:errorclass="is-invalid" class="form-control" maxlength="50" required>
+                            <div class="invalid-feedback" th:text="${#fields.hasErrors('aula')} ? ${#fields.errors('aula')[0]} : 'Ingresa el aula.'">Ingresa el aula.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Tipo *</label>
-                            <select th:field="*{tipo}" class="form-select" required>
+                            <select th:field="*{tipo}" th:errorclass="is-invalid" class="form-select" required>
                                 <option th:value="'PRESENCIAL'">PRESENCIAL</option>
                                 <option th:value="'VIRTUAL'">VIRTUAL</option>
                             </select>
-                            <span th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}" class="text-danger small"></span>
+                            <div class="invalid-feedback" th:errors="*{tipo}"></div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end gap-2 mt-4">
@@ -80,10 +79,42 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/formularios.js}"></script>
 <script>
     const _sb=document.getElementById('sidebar'),_ov=document.getElementById('sidebar-overlay'),_btn=document.getElementById('sidebarToggle');
     if(_btn)_btn.addEventListener('click',()=>{_sb.classList.add('sidebar-open');_ov.classList.add('show');});
     if(_ov)_ov.addEventListener('click',()=>{_sb.classList.remove('sidebar-open');_ov.classList.remove('show');});
+    (function () {
+        const periodo=document.getElementById('periodoFiltro'), curso=document.getElementById('cursoFiltro'),
+            seccion=document.getElementById('seccionFiltro'), datos=document.getElementById('datosSeccion');
+        const opciones=Array.from(seccion.options).filter(o=>o.value);
+        const inicial=seccion.value;
+        function cargar(sel, opcionesMapa, valor) {
+            sel.replaceChildren(new Option('Selecciona...', ''));
+            opcionesMapa.forEach(([id,nombre])=>sel.add(new Option(nombre,id)));
+            sel.value=valor||'';
+        }
+        function actualizaCursos(mantener) {
+            const opcionesCurso=new Map(opciones.filter(o=>o.dataset.periodo===periodo.value)
+                .map(o=>[o.dataset.curso,o.dataset.cursoNombre]));
+            cargar(curso,[...opcionesCurso],mantener);
+            actualizaSecciones(seccion.value);
+        }
+        function actualizaSecciones(mantener) {
+            seccion.replaceChildren(new Option('Selecciona sección',''));
+            opciones.filter(o=>o.dataset.periodo===periodo.value && o.dataset.curso===curso.value)
+                .forEach(o=>seccion.add(o));
+            seccion.value=mantener||'';
+            mostrar();
+        }
+        function mostrar(){const o=seccion.selectedOptions[0];datos.textContent=o&&o.value?'Docente titular: '+o.dataset.docente:'';}
+        cargar(periodo,[...new Map(opciones.map(o=>[o.dataset.periodo,o.dataset.periodoNombre]))]);
+        const elegido=opciones.find(o=>o.value===inicial);
+        if(elegido){periodo.value=elegido.dataset.periodo;actualizaCursos(elegido.dataset.curso);seccion.value=inicial;mostrar();}
+        periodo.addEventListener('change',()=>actualizaCursos(''));
+        curso.addEventListener('change',()=>actualizaSecciones(''));
+        seccion.addEventListener('change',mostrar);
+    })();
     const f=document.getElementById('formSesion');
     f.addEventListener('submit',e=>{if(!f.checkValidity()){e.preventDefault();e.stopPropagation();}f.classList.add('was-validated');});
 </script>

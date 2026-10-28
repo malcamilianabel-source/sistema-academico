@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface CursoRepository extends JpaRepository<Curso, Long> {
     List<Curso> findByNombreContainingIgnoreCase(String nombre);
     Optional<Curso> findByCodigo(String codigo);
+
+    Optional<Curso> findFirstByCodigoIgnoreCase(String codigo);
 }

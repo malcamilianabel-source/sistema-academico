@@ -40,21 +40,21 @@ public class CursoController {
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute Curso curso, BindingResult result,
                           Model model, RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
-            model.addAttribute("cursos", cursoService.listarTodos());
-            return vistaLista(model, "modalNuevo");
+        // Cualquier error (formato o código repetido) vuelve al modal con lo escrito y el campo marcado
+        if (!result.hasErrors()) {
+            try {
+                curso.setId(null);
+                cursoService.guardar(curso);
+                redirectAttributes.addFlashAttribute("mensaje", "Curso guardado correctamente.");
+                return "redirect:/cursos";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        if (cursoService.existeCodigo(curso.getCodigo(), null)) {
-            redirectAttributes.addFlashAttribute("error", "Ya existe un curso con el código " + curso.getCodigo() + ".");
-            return "redirect:/cursos";
-        }
-        try {
-            cursoService.guardar(curso);
-            redirectAttributes.addFlashAttribute("mensaje", "Curso guardado correctamente.");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/cursos";
+        model.addAttribute("cursos", cursoService.listarTodos());
+        return vistaLista(model, "modalNuevo");
     }
 
     @GetMapping("/editar/{id}")
@@ -66,21 +66,23 @@ public class CursoController {
     @PostMapping("/actualizar")
     public String actualizar(@Valid @ModelAttribute("cursoEditar") Curso curso, BindingResult result,
                              Model model, RedirectAttributes redirectAttributes) {
-        if (result.hasErrors()) {
-            model.addAttribute("cursos", cursoService.listarTodos());
-            return vistaLista(model, "modalEditar");
-        }
-        if (cursoService.existeCodigo(curso.getCodigo(), curso.getId())) {
-            redirectAttributes.addFlashAttribute("error", "Ya existe otro curso con el código " + curso.getCodigo() + ".");
+        if (curso.getId() == null || cursoService.buscarPorId(curso.getId()).isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "El curso no existe.");
             return "redirect:/cursos";
         }
-        try {
-            cursoService.guardar(curso);
-            redirectAttributes.addFlashAttribute("mensaje", "Curso actualizado correctamente.");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        if (!result.hasErrors()) {
+            try {
+                cursoService.guardar(curso);
+                redirectAttributes.addFlashAttribute("mensaje", "Curso actualizado correctamente.");
+                return "redirect:/cursos";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        return "redirect:/cursos";
+        model.addAttribute("cursos", cursoService.listarTodos());
+        return vistaLista(model, "modalEditar");
     }
 
     @PostMapping("/eliminar/{id}")

@@ -1,7 +1,4 @@
--- Esquema PostgreSQL (Supabase) - coincide con las entidades JPA (id SERIAL/INTEGER y nota NUMERIC, como en la BD).
--- Con spring.jpa.hibernate.ddl-auto=validate Hibernate NO crea tablas: ejecuta este script
--- una vez en el SQL Editor de Supabase antes de iniciar la aplicación.
--- Las claves foráneas no borran en cascada: la aplicación impide eliminar registros con dependencias.
+
 CREATE TABLE IF NOT EXISTS usuario (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,

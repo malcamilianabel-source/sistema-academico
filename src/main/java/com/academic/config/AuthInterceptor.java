@@ -35,12 +35,13 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if ("DOCENTE".equals(rol)) {
-            if (path.equals("/dashboard") || path.equals("/logout") || path.startsWith("/evaluaciones")
-                    || path.startsWith("/asistencias")) {
+            if (path.startsWith("/contenido-curso")) return true;
+            if (path.equals("/dashboard") || path.equals("/logout") || path.equals("/historial") || path.startsWith("/evaluaciones")
+                    || path.startsWith("/asistencias") || path.startsWith("/componentes")) {
                 return true;
             }
-            if (path.equals("/sesiones") && "GET".equalsIgnoreCase(method)) {
-                return true;
+            if (path.startsWith("/sesiones")) {
+                return true; // titular o apoyo: autorización por sección en controlador
             }
             if ((path.startsWith("/cursos") || path.startsWith("/periodos")
                     || path.startsWith("/asignaciones"))
@@ -51,6 +52,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if ("ESTUDIANTE".equals(rol)) {
+            if ((path.equals("/mis-cursos") || path.startsWith("/mis-cursos/")) && "GET".equalsIgnoreCase(method)) return true;
             if (path.equals("/dashboard") || path.equals("/logout") || path.equals("/historial")
                     || (path.equals("/matriculas") && "GET".equalsIgnoreCase(method))
                     || (path.equals("/matriculas/registrar") && "POST".equalsIgnoreCase(method))) {

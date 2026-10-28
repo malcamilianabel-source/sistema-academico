@@ -32,17 +32,37 @@
                 </div>
                 <div class="table-responsive">
                     <table class="table mb-0">
-                        <thead><tr><th>#</th><th>Nombre</th><th class="col-hide-sm">Fecha Inicio</th><th class="col-hide-sm">Fecha Fin</th><th th:if="${session.usuario.rol == 'ADMIN'}">Acciones</th></tr></thead>
+                        <thead><tr><th>Nombre</th><th class="col-hide-sm">Inicio</th><th class="col-hide-sm">Fin</th><th>Estado</th><th>Matrícula</th><th th:if="${session.usuario.rol == 'ADMIN'}">Acciones</th></tr></thead>
                         <tbody>
-                        <tr th:each="p, stat : ${periodos}">
-                            <td th:text="${stat.count}"></td><td th:text="${p.nombre}"></td>
-                            <td class="col-hide-sm" th:text="${p.fechaInicio}"></td><td class="col-hide-sm" th:text="${p.fechaFin}"></td>
-                            <td th:if="${session.usuario.rol == 'ADMIN'}">
-                                <button class="btn btn-edit btn-sm me-1" th:onclick="'cargarEditar(' + ${p.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar"><i class="bi bi-pencil-fill"></i></button>
-                                <form th:action="@{/periodos/eliminar/{id}(id=${p.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este periodo?')"><button type="submit" class="btn btn-delete btn-sm"><i class="bi bi-trash-fill"></i></button></form>
+                        <tr th:each="p : ${periodos}">
+                            <td class="fw-semibold" th:text="${p.nombre}"></td>
+                            <td class="col-hide-sm" th:text="${#temporals.format(p.fechaInicio, 'dd/MM/yyyy')}"></td>
+                            <td class="col-hide-sm" th:text="${#temporals.format(p.fechaFin, 'dd/MM/yyyy')}"></td>
+                            <td>
+                                <span th:if="${p.estado == 'ACTIVO'}" class="badge bg-success">Activo</span>
+                                <span th:if="${p.estado == 'PLANIFICADO'}" class="badge bg-info text-dark">Planificado</span>
+                                <span th:if="${p.estado == 'CERRADO'}" class="badge bg-secondary">Cerrado</span>
+                            </td>
+                            <td>
+                                <span th:if="${p.matriculaAbierta}" class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Abierta</span>
+                                <span th:unless="${p.matriculaAbierta}" class="text-muted small">Cerrada</span>
+                            </td>
+                            <td th:if="${session.usuario.rol == 'ADMIN'}" class="text-nowrap">
+                                <form th:if="${p.estado == 'PLANIFICADO'}" th:action="@{/periodos/{id}/activar(id=${p.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('¿Activar este periodo?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-success me-1" title="Activar periodo"><i class="bi bi-play-fill"></i> Activar</button></form>
+                                <form th:if="${p.estado == 'ACTIVO'}" th:action="@{/periodos/{id}/cerrar(id=${p.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('¿Cerrar este periodo? Quedará solo para consulta, se cerrará su matrícula y las matrículas activas pasarán a CULMINADO.')">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary me-1" title="Cerrar periodo"><i class="bi bi-lock-fill"></i> Cerrar</button></form>
+                                <form th:if="${p.estado != 'CERRADO' and !p.matriculaAbierta}" th:action="@{/periodos/{id}/abrir-matricula(id=${p.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary me-1" title="Abrir matrícula"><i class="bi bi-door-open"></i> Abrir matrícula</button></form>
+                                <form th:if="${p.matriculaAbierta}" th:action="@{/periodos/{id}/cerrar-matricula(id=${p.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning me-1" title="Cerrar matrícula"><i class="bi bi-door-closed"></i> Cerrar matrícula</button></form>
+                                <button th:unless="${p.cerrado}" class="btn btn-edit btn-sm me-1" th:onclick="'cargarEditar(' + ${p.id} + ')'" data-bs-toggle="modal" data-bs-target="#modalEditar" title="Editar"><i class="bi bi-pencil-fill"></i></button>
+                                <form th:if="${p.estado == 'PLANIFICADO'}" th:action="@{/periodos/eliminar/{id}(id=${p.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este periodo?')"><button type="submit" class="btn btn-delete btn-sm" title="Eliminar"><i class="bi bi-trash-fill"></i></button></form>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(periodos)}"><td colspan="5" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No se encontraron periodos.</td></tr>
+                        <tr th:if="${#lists.isEmpty(periodos)}"><td colspan="6" class="text-center py-4" style="color:#A79E9C;"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No se encontraron periodos.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -53,16 +73,17 @@
 
 <div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Nuevo Periodo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/periodos/guardar}" th:object="${periodo}" method="post" id="formNuevo" novalidate><div class="modal-body">
-        <div class="mb-3"><label class="form-label">Nombre * <small class="text-muted">(Ej: 2026-I)</small></label>
-            <input type="text" th:field="*{nombre}" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
-            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
-            <div class="invalid-feedback">Ingresa un nombre de periodo válido.</div></div>
+    <form th:action="@{/periodos/guardar}" th:object="${periodo}" method="post" id="formNuevo" novalidate><div class="modal-body"><div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
+        <div class="mb-3"><label class="form-label">Nombre *</label>
+            <input type="text" th:field="*{nombre}" th:errorclass="is-invalid" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('nombre')} ? ${#fields.errors('nombre')[0]} : 'Ingresa un nombre de periodo válido.'">Ingresa un nombre de periodo válido.</div>
+            <div class="form-text">Año y ciclo. No se puede repetir.</div></div>
         <div class="row g-3">
-            <div class="col-6"><label class="form-label">Fecha Inicio *</label><input type="date" th:field="*{fechaInicio}" class="form-control" required>
-            <span th:if="${#fields.hasErrors('fechaInicio')}" th:errors="*{fechaInicio}" class="text-danger small"></span></div>
-            <div class="col-6"><label class="form-label">Fecha Fin *</label><input type="date" th:field="*{fechaFin}" class="form-control" required>
-            <span th:if="${#fields.hasErrors('fechaFin')}" th:errors="*{fechaFin}" class="text-danger small"></span></div>
+            <div class="col-6"><label class="form-label">Fecha Inicio *</label><input type="date" th:field="*{fechaInicio}" th:errorclass="is-invalid" class="form-control" required>
+            <div class="invalid-feedback" th:errors="*{fechaInicio}"></div></div>
+            <div class="col-6"><label class="form-label">Fecha Fin *</label><input type="date" th:field="*{fechaFin}" th:errorclass="is-invalid" class="form-control" required>
+            <div class="invalid-feedback" th:errors="*{fechaFin}"></div>
+            <div class="form-text">Debe ser posterior a la fecha de inicio</div></div>
         </div>
     </div><div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -72,16 +93,17 @@
 
 <div th:if="${session.usuario.rol == 'ADMIN'}" class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Periodo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/periodos/actualizar}" th:object="${periodoEditar}" method="post" id="formEditar" novalidate><input type="hidden" th:field="*{id}" id="editId"><div class="modal-body">
+    <form th:action="@{/periodos/actualizar}" th:object="${periodoEditar}" method="post" id="formEditar" novalidate><input type="hidden" th:field="*{id}" id="editId"><div class="modal-body"><div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
         <div class="mb-3"><label class="form-label">Nombre *</label>
-            <input type="text" th:field="*{nombre}" id="editNombre" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
-            <span th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger small"></span>
-            <div class="invalid-feedback">Ingresa un nombre válido.</div></div>
+            <input type="text" th:field="*{nombre}" th:errorclass="is-invalid" id="editNombre" class="form-control" pattern="^[\w\s\-\.]{2,50}$" maxlength="50" required>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('nombre')} ? ${#fields.errors('nombre')[0]} : 'Ingresa un nombre válido.'">Ingresa un nombre válido.</div>
+            <div class="form-text">Año y ciclo. No se puede repetir.</div></div>
         <div class="row g-3">
-            <div class="col-6"><label class="form-label">Fecha Inicio *</label><input type="date" th:field="*{fechaInicio}" id="editFechaInicio" class="form-control" required>
-            <span th:if="${#fields.hasErrors('fechaInicio')}" th:errors="*{fechaInicio}" class="text-danger small"></span></div>
-            <div class="col-6"><label class="form-label">Fecha Fin *</label><input type="date" th:field="*{fechaFin}" id="editFechaFin" class="form-control" required>
-            <span th:if="${#fields.hasErrors('fechaFin')}" th:errors="*{fechaFin}" class="text-danger small"></span></div>
+            <div class="col-6"><label class="form-label">Fecha Inicio *</label><input type="date" th:field="*{fechaInicio}" th:errorclass="is-invalid" id="editFechaInicio" class="form-control" required>
+            <div class="invalid-feedback" th:errors="*{fechaInicio}"></div></div>
+            <div class="col-6"><label class="form-label">Fecha Fin *</label><input type="date" th:field="*{fechaFin}" th:errorclass="is-invalid" id="editFechaFin" class="form-control" required>
+            <div class="invalid-feedback" th:errors="*{fechaFin}"></div>
+            <div class="form-text">Debe ser posterior a la fecha de inicio</div></div>
         </div>
     </div><div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -89,6 +111,7 @@
     </div></form>
 </div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/formularios.js}"></script>
 <script>
 
     // Sidebar toggle

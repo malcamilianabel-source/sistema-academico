@@ -33,38 +33,28 @@ public class DocenteController {
         } else {
             lista = docenteService.listarTodos();
         }
+
         model.addAttribute("docentes", lista);
         return vistaLista(model, null);
     }
 
+    // Cualquier error (formato o dato repetido) vuelve al modal con lo escrito y el campo marcado.
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute Docente docente, BindingResult result,
                           Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            model.addAttribute("docentes", docenteService.listarTodos());
-            return vistaLista(model, "modalNuevo");
+        if (!result.hasErrors()) {
+            try {
+                docenteService.registrar(docente);
+                ra.addFlashAttribute("mensaje", "Docente guardado correctamente.");
+                return "redirect:/docentes";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        docente.setTelefono(normalizarTelefono(docente.getTelefono()));
-
-        if (docenteService.existeDni(docente.getDni(), null)) {
-            ra.addFlashAttribute("error", "Ya existe un docente con el DNI " + docente.getDni() + ".");
-            return "redirect:/docentes";
-        }
-        if (docenteService.existeEmail(docente.getEmail(), null)) {
-            ra.addFlashAttribute("error", "Ya existe un docente con ese email.");
-            return "redirect:/docentes";
-        }
-        if (docenteService.existeTelefono(docente.getTelefono(), null)) {
-            ra.addFlashAttribute("error", "Ya existe un docente registrado con el teléfono " + docente.getTelefono() + ".");
-            return "redirect:/docentes";
-        }
-        try {
-            docenteService.guardar(docente);
-            ra.addFlashAttribute("mensaje", "Docente guardado correctamente.");
-        } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/docentes";
+        model.addAttribute("docentes", docenteService.listarTodos());
+        return vistaLista(model, "modalNuevo");
     }
 
     @GetMapping("/editar/{id}")
@@ -76,38 +66,23 @@ public class DocenteController {
     @PostMapping("/actualizar")
     public String actualizar(@Valid @ModelAttribute("docenteEditar") Docente form, BindingResult result,
                              Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            model.addAttribute("docentes", docenteService.listarTodos());
-            return vistaLista(model, "modalEditar");
-        }
-        form.setTelefono(normalizarTelefono(form.getTelefono()));
-
-        if (docenteService.existeDni(form.getDni(), form.getId())) {
-            ra.addFlashAttribute("error", "Ya existe otro docente con el DNI " + form.getDni() + ".");
+        if (form.getId() == null || docenteService.buscarPorId(form.getId()).isEmpty()) {
+            ra.addFlashAttribute("error", "El docente no existe.");
             return "redirect:/docentes";
         }
-        if (docenteService.existeEmail(form.getEmail(), form.getId())) {
-            ra.addFlashAttribute("error", "Ya existe otro docente con ese email.");
-            return "redirect:/docentes";
+        if (!result.hasErrors()) {
+            try {
+                docenteService.actualizar(form);
+                ra.addFlashAttribute("mensaje", "Docente actualizado correctamente.");
+                return "redirect:/docentes";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        if (docenteService.existeTelefono(form.getTelefono(), form.getId())) {
-            ra.addFlashAttribute("error", "Ya existe otro docente registrado con el teléfono " + form.getTelefono() + ".");
-            return "redirect:/docentes";
-        }
-        Docente d = docenteService.buscarPorId(form.getId()).orElseThrow();
-        d.setNombre(form.getNombre());
-        d.setApellido(form.getApellido());
-        d.setDni(form.getDni());
-        d.setTelefono(form.getTelefono());
-        d.setEspecialidad(form.getEspecialidad());
-        d.setEmail(form.getEmail());
-        try {
-            docenteService.guardar(d);
-            ra.addFlashAttribute("mensaje", "Docente actualizado correctamente.");
-        } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/docentes";
+        model.addAttribute("docentes", docenteService.listarTodos());
+        return vistaLista(model, "modalEditar");
     }
 
     @PostMapping("/eliminar/{id}")
@@ -129,10 +104,5 @@ public class DocenteController {
         model.addAttribute("abrirModal", abrirModal);
         model.addAttribute("paginaActual", "docentes");
         return "docentes/lista";
-    }
-
-    private String normalizarTelefono(String telefono) {
-        if (telefono == null || telefono.isBlank()) return null;
-        return telefono.trim();
     }
 }

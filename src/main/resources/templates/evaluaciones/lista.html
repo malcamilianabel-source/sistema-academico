@@ -26,6 +26,7 @@
             <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span></div>
             <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
             <div th:if="${aviso}" class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-info-circle-fill"></i><span th:text="${aviso}"></span></div>
+            <div class="tabla-container p-3 mb-3"><h5>Configurar evaluaciones por sección</h5><div class="d-flex flex-wrap gap-2"><a class="btn btn-sm btn-outline-secondary" th:each="cp : ${seccionesDisponibles}" th:href="@{/componentes/{id}(id=${cp.id})}" th:text="${cp.curso.nombre + ' · ' + cp.seccion}"></a></div></div>
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-journal-text me-2" style="color:#B58863;"></i>Lista de Calificaciones</h5>
@@ -38,7 +39,7 @@
                         <tr th:each="e, stat : ${evaluaciones}">
                             <td th:text="${stat.count}"></td>
                             <td th:text="${e.matricula.estudiante.nombre + ' ' + e.matricula.estudiante.apellido}"></td>
-                            <td th:text="${e.matricula.cursoPeriodo.curso.nombre}"></td>
+                            <td th:text="${e.matricula.cursoPeriodo.curso.nombre + ' · Secc. ' + e.matricula.cursoPeriodo.seccion}"></td>
                             <td class="col-hide-sm" th:text="${e.tipoEvaluacion}"></td>
                             <td><span class="badge" th:classappend="${e.nota >= 11} ? ' bg-success' : ' bg-danger'" th:text="${e.nota}"></span></td>
                             <td class="col-hide-sm" th:text="${e.fecha}"></td>
@@ -58,29 +59,33 @@
 
 <div class="modal fade" id="modalNuevo" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-journal-plus me-2"></i>Nueva Calificación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <form th:action="@{/evaluaciones/guardar}" th:object="${evaluacion}" method="post" id="formNuevo" novalidate><div class="modal-body">
+    <form th:action="@{/evaluaciones/guardar}" th:object="${evaluacion}" method="post" id="formNuevo" novalidate><div class="modal-body"><div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
         <div class="mb-3"><label class="form-label">Matrícula *</label>
-            <select th:field="*{matricula.id}" class="form-select" required>
+            <select th:field="*{matricula.id}" th:errorclass="is-invalid" class="form-select" required>
                 <option value="">Seleccionar...</option>
-                <option th:each="m : ${matriculas}" th:value="${m.id}" th:text="${m.estudiante.nombre + ' ' + m.estudiante.apellido + ' — ' + m.cursoPeriodo.curso.nombre + ' (' + m.cursoPeriodo.periodo.nombre + ')'}"></option>
+                <option th:each="m : ${matriculas}" th:value="${m.id}" th:attr="data-seccion=${m.cursoPeriodo.id}" th:text="${m.estudiante.nombre + ' ' + m.estudiante.apellido + ' — ' + m.cursoPeriodo.curso.nombre + ' · Secc. ' + m.cursoPeriodo.seccion + ' (' + m.cursoPeriodo.periodo.nombre + ')'}"></option>
             </select>
-            <span th:if="${#fields.hasErrors('matricula.id')}" th:errors="*{matricula.id}" class="text-danger small"></span>
-            <div class="invalid-feedback">Selecciona una matrícula.</div>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('matricula.id')} ? ${#fields.errors('matricula.id')[0]} : 'Selecciona una matrícula.'">Selecciona una matrícula.</div>
         </div>
-        <div class="mb-3"><label class="form-label">Tipo de Evaluación * <small class="text-muted">(Ej: PC1, Parcial, Final)</small></label>
-            <input type="text" th:field="*{tipoEvaluacion}" class="form-control" maxlength="50" required>
-            <span th:if="${#fields.hasErrors('tipoEvaluacion')}" th:errors="*{tipoEvaluacion}" class="text-danger small"></span>
-            <div class="invalid-feedback">Ingresa el tipo de evaluación.</div>
+        <div class="mb-3"><label class="form-label">Componente ponderado</label>
+            <select th:field="*{componente.id}" class="form-select" id="componenteNuevo">
+                <option value="">Evaluación tradicional (sin ponderación)</option>
+                <option th:each="c : ${componentesDisponibles}" th:value="${c.id}" th:attr="data-seccion=${c.cursoPeriodo.id}" th:text="${c.nombre + ' · ' + c.peso + '%'}"></option>
+            </select><small class="form-text">Configura los componentes de una sección antes de calificarla.</small></div>
+        <div class="mb-3"><label class="form-label">Tipo de Evaluación *</label>
+            <input type="text" th:field="*{tipoEvaluacion}" th:errorclass="is-invalid" class="form-control" maxlength="50" required>
+            <div class="invalid-feedback" th:text="${#fields.hasErrors('tipoEvaluacion')} ? ${#fields.errors('tipoEvaluacion')[0]} : 'Ingresa el tipo de evaluación.'">Ingresa el tipo de evaluación.</div>
+
         </div>
         <div class="row g-3">
-            <div class="col-6"><label class="form-label">Nota * <small class="text-muted">(0–20)</small></label>
-                <input type="number" th:field="*{nota}" min="0" max="20" step="0.01" class="form-control" required>
-                <span th:if="${#fields.hasErrors('nota')}" th:errors="*{nota}" class="text-danger small"></span>
-                <div class="invalid-feedback">Nota entre 0 y 20.</div>
+            <div class="col-6"><label class="form-label">Nota *</label>
+                <input type="number" th:field="*{nota}" th:errorclass="is-invalid" min="0" max="20" step="0.01" class="form-control" required>
+                <div class="invalid-feedback" th:text="${#fields.hasErrors('nota')} ? ${#fields.errors('nota')[0]} : 'Nota entre 0 y 20.'">Nota entre 0 y 20.</div>
+                <div class="form-text">De 0 a 20</div>
             </div>
             <div class="col-6"><label class="form-label">Fecha</label>
-                <input type="date" th:field="*{fecha}" class="form-control">
-                <span th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}" class="text-danger small"></span>
+                <input type="date" th:field="*{fecha}" th:errorclass="is-invalid" class="form-control">
+                <div class="invalid-feedback" th:errors="*{fecha}"></div>
             </div>
         </div>
     </div><div class="modal-footer">
@@ -92,21 +97,21 @@
 <div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil-fill me-2"></i>Editar Calificación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <form th:action="@{/evaluaciones/actualizar}" th:object="${evaluacionEditar}" method="post" id="formEditar" novalidate><input type="hidden" th:field="*{id}" id="editId">
-        <div class="modal-body">
+        <div class="modal-body"><div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
             <div class="mb-3"><label class="form-label">Tipo de Evaluación *</label>
-                <input type="text" th:field="*{tipoEvaluacion}" id="editTipo" class="form-control" maxlength="50" required>
-                <span th:if="${#fields.hasErrors('tipoEvaluacion')}" th:errors="*{tipoEvaluacion}" class="text-danger small"></span>
-                <div class="invalid-feedback">Ingresa el tipo de evaluación.</div>
+                <input type="text" th:field="*{tipoEvaluacion}" th:errorclass="is-invalid" id="editTipo" class="form-control" maxlength="50" required>
+                <div class="invalid-feedback" th:text="${#fields.hasErrors('tipoEvaluacion')} ? ${#fields.errors('tipoEvaluacion')[0]} : 'Ingresa el tipo de evaluación.'">Ingresa el tipo de evaluación.</div>
+    
             </div>
             <div class="row g-3">
-                <div class="col-6"><label class="form-label">Nota * <small class="text-muted">(0–20)</small></label>
-                    <input type="number" th:field="*{nota}" id="editNota" min="0" max="20" step="0.01" class="form-control" required>
-                    <span th:if="${#fields.hasErrors('nota')}" th:errors="*{nota}" class="text-danger small"></span>
-                    <div class="invalid-feedback">Nota entre 0 y 20.</div>
+                <div class="col-6"><label class="form-label">Nota *</label>
+                    <input type="number" th:field="*{nota}" th:errorclass="is-invalid" id="editNota" min="0" max="20" step="0.01" class="form-control" required>
+                    <div class="invalid-feedback" th:text="${#fields.hasErrors('nota')} ? ${#fields.errors('nota')[0]} : 'Nota entre 0 y 20.'">Nota entre 0 y 20.</div>
+                    <div class="form-text">De 0 a 20</div>
                 </div>
                 <div class="col-6"><label class="form-label">Fecha</label>
-                    <input type="date" th:field="*{fecha}" id="editFecha" class="form-control">
-                    <span th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}" class="text-danger small"></span>
+                    <input type="date" th:field="*{fecha}" th:errorclass="is-invalid" id="editFecha" class="form-control">
+                    <div class="invalid-feedback" th:errors="*{fecha}"></div>
                 </div>
             </div>
         </div>
@@ -117,6 +122,7 @@
     </form>
 </div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/formularios.js}"></script>
 <script>
 
     // Sidebar toggle
@@ -138,6 +144,20 @@
         });
     }
     activarVal('formNuevo','formEditar');
+    const matriculaSel=document.querySelector('#formNuevo select[name="matricula.id"]');
+    const componenteSel=document.getElementById('componenteNuevo');
+    if(matriculaSel&&componenteSel){
+        const componentes=Array.from(componenteSel.options).filter(o=>o.value);
+        const matriculas=new Map(Array.from(matriculaSel.options).filter(o=>o.value).map(o=>[o.value,o.dataset.seccion]));
+        function actualizarComponentes(){
+            const seccion=matriculas.get(matriculaSel.value);
+            componenteSel.replaceChildren(new Option('Evaluación tradicional (sin ponderación)',''));
+            componentes.filter(o=>o.dataset.seccion===seccion).forEach(o=>componenteSel.add(o));
+        }
+        matriculaSel.addEventListener('change',actualizarComponentes);actualizarComponentes();
+        componenteSel.addEventListener('change',()=>{const elegido=componenteSel.selectedOptions[0];if(elegido&&elegido.value){const tipo=document.querySelector('#formNuevo input[name="tipoEvaluacion"]');if(tipo)tipo.value=elegido.textContent.split(' · ')[0];}});
+    }
+
 
 </script>
 <script th:inline="javascript">

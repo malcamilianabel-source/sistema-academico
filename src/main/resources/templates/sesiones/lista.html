@@ -29,7 +29,7 @@
             <div class="tabla-container">
                 <div class="tabla-header">
                     <h5><i class="bi bi-calendar-event me-2" style="color:#B58863;"></i>Lista de Sesiones</h5>
-                    <a th:if="${session.usuario.rol == 'ADMIN'}" th:href="@{/sesiones/nuevo}" class="btn btn-sm btn-accent"><i class="bi bi-plus-lg me-1"></i> Nueva Sesión</a>
+                    <a th:if="${session.usuario.rol == 'ADMIN' or session.usuario.rol == 'DOCENTE'}" th:href="@{/sesiones/nuevo}" class="btn btn-sm btn-accent"><i class="bi bi-plus-lg me-1"></i> Nueva Sesión</a>
                 </div>
                 <div class="table-responsive">
                     <table class="table mb-0">
@@ -39,14 +39,14 @@
                             <td th:text="${stat.count}"></td>
                             <td th:text="${#temporals.format(s.fechaSesion, 'dd/MM/yyyy')}"></td>
                             <td th:text="${s.horaInicio != null ? #temporals.format(s.horaInicio, 'HH:mm') + (s.horaFin != null ? ' – ' + #temporals.format(s.horaFin, 'HH:mm') : '') : '—'}"></td>
-                            <td th:text="${s.cursoPeriodo.curso.codigo + ' — ' + s.cursoPeriodo.curso.nombre}"></td>
+                            <td th:text="${s.cursoPeriodo.curso.codigo + ' — ' + s.cursoPeriodo.curso.nombre + ' · Secc. ' + s.cursoPeriodo.seccion}"></td>
                             <td class="col-hide-sm" th:text="${s.cursoPeriodo.periodo.nombre}"></td>
                             <td class="col-hide-sm" th:text="${s.aula}"></td>
                             <td><span class="badge" th:style="${s.tipo == 'VIRTUAL'} ? 'background-color:#3D4D55' : 'background-color:#B58863'" th:text="${s.tipo}"></span></td>
                             <td class="col-hide-sm" th:text="${asistenciasPorSesion.getOrDefault(s.id, 0L)}"></td>
                             <td class="text-nowrap">
                                 <a th:href="@{/asistencias/sesion/{id}(id=${s.id})}" class="btn btn-sm btn-accent me-1" title="Tomar asistencia"><i class="bi bi-clipboard-check"></i></a>
-                                <th:block th:if="${session.usuario.rol == 'ADMIN'}">
+                                <th:block th:if="${session.usuario.rol == 'ADMIN' or session.usuario.rol == 'DOCENTE'}">
                                     <a th:href="@{/sesiones/editar/{id}(id=${s.id})}" class="btn btn-edit btn-sm me-1" title="Editar"><i class="bi bi-pencil-fill"></i></a>
                                     <form th:action="@{/sesiones/eliminar/{id}(id=${s.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta sesión?')"><button type="submit" class="btn btn-delete btn-sm" title="Eliminar"><i class="bi bi-trash-fill"></i></button></form>
                                 </th:block>

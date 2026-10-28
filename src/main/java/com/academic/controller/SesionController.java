@@ -24,6 +24,7 @@ public class SesionController {
     @Autowired private CursoPeriodoService cursoPeriodoService;
     @Autowired private AsistenciaService asistenciaService;
 
+
     @GetMapping
     public String listar(HttpSession session, Model model) {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
@@ -39,52 +40,56 @@ public class SesionController {
     }
 
     @GetMapping("/nuevo")
-    public String nuevo(Model model) {
+    public String nuevo(HttpSession session, Model model) {
         Sesion sesion = new Sesion();
         sesion.setCursoPeriodo(new CursoPeriodo());
         sesion.setTipo("PRESENCIAL");
         model.addAttribute("sesion", sesion);
-        return vistaFormulario(model);
+        return vistaFormulario(model, session);
     }
 
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute Sesion sesion, BindingResult result,
-                          Model model, RedirectAttributes ra) {
-        resolverCursoPeriodo(sesion, result);
+                          Model model, RedirectAttributes ra, HttpSession session) {
+        resolverCursoPeriodo(sesion, result, session);
         if (result.hasErrors()) {
-            return vistaFormulario(model);
+            return vistaFormulario(model, session);
         }
         sesion.setId(null);
-        return guardarSesion(sesion, result, model, ra, "Sesión registrada correctamente.");
+        return guardarSesion(sesion, result, model, ra, session, "Sesión registrada correctamente.");
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra, HttpSession session) {
         Sesion sesion = sesionService.buscarPorId(id).orElse(null);
         if (sesion == null) {
             ra.addFlashAttribute("error", "La sesión no existe.");
             return "redirect:/sesiones";
         }
+        if (!permitido(session, sesion.getCursoPeriodo())) return "redirect:/acceso-denegado";
         model.addAttribute("sesion", sesion);
-        return vistaFormulario(model);
+        return vistaFormulario(model, session);
     }
 
     @PostMapping("/actualizar")
     public String actualizar(@Valid @ModelAttribute Sesion sesion, BindingResult result,
-                             Model model, RedirectAttributes ra) {
-        resolverCursoPeriodo(sesion, result);
+                             Model model, RedirectAttributes ra, HttpSession session) {
+        resolverCursoPeriodo(sesion, result, session);
         if (result.hasErrors()) {
-            return vistaFormulario(model);
+            return vistaFormulario(model, session);
         }
         if (sesion.getId() == null || sesionService.buscarPorId(sesion.getId()).isEmpty()) {
             ra.addFlashAttribute("error", "La sesión no existe.");
             return "redirect:/sesiones";
         }
-        return guardarSesion(sesion, result, model, ra, "Sesión actualizada correctamente.");
+        if (!permitido(session, sesion.getCursoPeriodo()) || !permitido(session, sesionService.buscarPorId(sesion.getId()).orElseThrow().getCursoPeriodo())) return "redirect:/acceso-denegado";
+        return guardarSesion(sesion, result, model, ra, session, "Sesión actualizada correctamente.");
     }
 
     @PostMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
+    public String eliminar(@PathVariable Long id, RedirectAttributes ra, HttpSession session) {
+        Sesion sesion = sesionService.buscarPorId(id).orElse(null);
+        if (sesion == null || !permitido(session, sesion.getCursoPeriodo())) return "redirect:/acceso-denegado";
         try {
             sesionService.eliminar(id);
             ra.addFlashAttribute("mensaje", "Sesión eliminada correctamente.");
@@ -96,32 +101,42 @@ public class SesionController {
     }
 
     private String guardarSesion(Sesion sesion, BindingResult result, Model model,
-                                 RedirectAttributes ra, String mensaje) {
+                                 RedirectAttributes ra, HttpSession session, String mensaje) {
+        if (!permitido(session, sesion.getCursoPeriodo())) return "redirect:/acceso-denegado";
         try {
             sesionService.guardar(sesion);
         } catch (IllegalArgumentException e) {
-            // La única regla del servicio es el orden de las horas
-            result.rejectValue("horaFin", "HoraFin", e.getMessage());
-            return vistaFormulario(model);
+            // Horas incompletas o invertidas, o fecha fuera del periodo: el error se muestra en su campo
+            Formularios.rechazar(result, e);
+            return vistaFormulario(model, session);
         }
         ra.addFlashAttribute("mensaje", mensaje);
         return "redirect:/sesiones";
     }
 
     /** El select envía cursoPeriodo.id: se reemplaza por la asignación real o se marca el error. */
-    private void resolverCursoPeriodo(Sesion sesion, BindingResult result) {
+    private void resolverCursoPeriodo(Sesion sesion, BindingResult result, HttpSession session) {
         Long id = sesion.getCursoPeriodo() != null ? sesion.getCursoPeriodo().getId() : null;
         CursoPeriodo cursoPeriodo = id != null ? cursoPeriodoService.buscarPorId(id).orElse(null) : null;
         if (cursoPeriodo == null) {
             result.rejectValue("cursoPeriodo.id", "NotNull", "Selecciona un curso");
+        } else if (!permitido(session, cursoPeriodo)) {
+            result.rejectValue("cursoPeriodo.id", "Permiso", "No puedes gestionar esa sección.");
         } else {
             sesion.setCursoPeriodo(cursoPeriodo);
         }
     }
 
-    private String vistaFormulario(Model model) {
-        model.addAttribute("cursosPeriodo", cursoPeriodoService.listarTodos());
+    private String vistaFormulario(Model model, HttpSession session) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        model.addAttribute("cursosPeriodo", "DOCENTE".equals(usuario.getRol()) ? cursoPeriodoService.listarDeDocente(usuario.getId()) : cursoPeriodoService.listarTodos());
         model.addAttribute("paginaActual", "sesiones");
         return "sesiones/form";
     }
+    private boolean permitido(HttpSession session, CursoPeriodo cp) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        return usuario != null && cp != null && ("ADMIN".equals(usuario.getRol()) ||
+                ("DOCENTE".equals(usuario.getRol()) && cursoPeriodoService.dictaSeccion(usuario.getId(), cp)));
+    }
 }
+

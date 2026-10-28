@@ -12,9 +12,20 @@ public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
             String nombre, String apellido);
     Optional<Estudiante> findByDni(String dni);
     Optional<Estudiante> findByEmail(String email);
+
+    Optional<Estudiante> findFirstByEmailIgnoreCase(String email);
+
+    Optional<Estudiante> findFirstByTelefono(String telefono);
     Optional<Estudiante> findByUsuarioId(Long usuarioId);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select e from Estudiante e where e.usuario.id = :usuarioId")
     Optional<Estudiante> buscarPorUsuarioConBloqueo(@org.springframework.data.repository.query.Param("usuarioId") Long usuarioId);
+
+    /** Igual que el anterior, pero por id del estudiante (matrícula registrada por el administrador). */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select e from Estudiante e where e.id = :id")
+    Optional<Estudiante> buscarConBloqueo(@org.springframework.data.repository.query.Param("id") Long id);
+
+    List<Estudiante> findAllByOrderByApellidoAscNombreAsc();
 }

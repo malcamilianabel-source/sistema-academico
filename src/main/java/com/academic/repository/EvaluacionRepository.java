@@ -12,8 +12,9 @@ import java.util.List;
 @Repository
 public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
     List<Evaluacion> findByMatriculaId(Long matriculaId);
+    List<Evaluacion> findByMatriculaIdOrderByFechaAsc(Long matriculaId);
 
-    @Query("select e from Evaluacion e where e.matricula.cursoPeriodo.docente.usuario.id = :usuarioId")
+    @Query("select e from Evaluacion e join e.matricula m join m.cursoPeriodo cp where cp.docente.usuario.id = :usuarioId or exists (select a.id from AsignacionDocente a where a.cursoPeriodo = cp and a.docente.usuario.id = :usuarioId)")
     List<Evaluacion> findByDocenteUsuarioId(@Param("usuarioId") Long usuarioId);
 
     /**

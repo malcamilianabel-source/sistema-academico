@@ -68,22 +68,59 @@ public class UsuarioService {
 
     /** Valida la contraseña escrita por el usuario y devuelve su hash BCrypt. */
     public String codificarPassword(String password) {
-        Validaciones.exigir(password != null && password.length() >= 4,
+        Validaciones.exigir(password != null && password.length() >= 4, "password",
                 "La contraseña debe tener al menos 4 caracteres.");
         return encoder.encode(password);
     }
 
+    /** Registra un usuario nuevo con la contraseña escrita en el formulario (se guarda su hash). */
+    @Transactional
+    public Usuario registrar(Usuario datos) {
+        datos.setId(null);
+        validarDatos(datos);
+        datos.setPassword(codificarPassword(datos.getPassword()));
+        return guardar(datos);
+    }
+
+    /**
+     * Actualiza nombre, apellido, email, rol y, si se escribió, la contraseña.
+     * Se valida antes de tocar el registro guardado, para no dejarlo modificado si hay un error.
+     */
+    @Transactional
+    public Usuario actualizar(Usuario datos) {
+        Validaciones.exigir(datos.getId() != null, "El usuario no existe.");
+        validarDatos(datos);
+        String nuevoHash = datos.getPassword() == null ? null : codificarPassword(datos.getPassword());
+        Usuario usuario = usuarioRepository.findById(datos.getId())
+                .orElseThrow(() -> new IllegalArgumentException("El usuario no existe."));
+        usuario.setNombre(datos.getNombre());
+        usuario.setApellido(datos.getApellido());
+        usuario.setEmail(datos.getEmail());
+        usuario.setRol(datos.getRol());
+        if (nuevoHash != null) usuario.setPassword(nuevoHash);
+        return guardar(usuario);
+    }
+
     @Transactional
     public Usuario guardar(Usuario usuario) {
-        Validaciones.nombreYApellido(usuario.getNombre(), usuario.getApellido());
-        Validaciones.exigir(Validaciones.coincide(usuario.getEmail(), EMAIL) && usuario.getEmail().length() <= 150,
-                "Ingresa un email válido.");
-        Validaciones.exigir(usuario.getRol() != null && ROLES.contains(usuario.getRol()),
-                "El rol debe ser ADMIN, DOCENTE o ESTUDIANTE.");
-
+        validarDatos(usuario);
         Usuario guardado = usuarioRepository.save(usuario);
         sincronizarVinculo(guardado);
         return guardado;
+    }
+
+    private void validarDatos(Usuario usuario) {
+        usuario.setNombre(Validaciones.limpiar(usuario.getNombre()));
+        usuario.setApellido(Validaciones.limpiar(usuario.getApellido()));
+        usuario.setEmail(Validaciones.limpiar(usuario.getEmail()));
+        Validaciones.nombreYApellido(usuario.getNombre(), usuario.getApellido());
+        Validaciones.exigir(Validaciones.coincide(usuario.getEmail(), EMAIL) && usuario.getEmail().length() <= 150,
+                "email", "Ingresa un email válido.");
+        Validaciones.exigir(usuarioRepository.findFirstByEmailIgnoreCase(usuario.getEmail())
+                        .filter(u -> !u.getId().equals(usuario.getId())).isEmpty(),
+                "email", "Este email ya está registrado en otro usuario.");
+        Validaciones.exigir(usuario.getRol() != null && ROLES.contains(usuario.getRol()),
+                "rol", "El rol debe ser ADMIN, DOCENTE o ESTUDIANTE.");
     }
 
     @Transactional

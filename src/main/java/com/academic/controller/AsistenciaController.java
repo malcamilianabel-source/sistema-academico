@@ -5,6 +5,7 @@ import com.academic.model.Matricula;
 import com.academic.model.Sesion;
 import com.academic.model.Usuario;
 import com.academic.service.AsistenciaService;
+import com.academic.service.CursoPeriodoService;
 import com.academic.service.MatriculaService;
 import com.academic.service.SesionService;
 import jakarta.servlet.http.HttpSession;
@@ -29,6 +30,7 @@ public class AsistenciaController {
     @Autowired private AsistenciaService asistenciaService;
     @Autowired private SesionService sesionService;
     @Autowired private MatriculaService matriculaService;
+    @Autowired private CursoPeriodoService cursoPeriodoService;
 
     /** Sesiones disponibles para tomar asistencia, con cuántos registros tiene cada una. */
     @GetMapping
@@ -107,7 +109,7 @@ public class AsistenciaController {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario == null) return false;
         if (!esDocente(usuario)) return true;
-        Usuario titular = sesion.getCursoPeriodo().getDocente().getUsuario();
-        return titular != null && titular.getId().equals(usuario.getId());
+        // Titular o docente de apoyo de la sección
+        return cursoPeriodoService.dictaSeccion(usuario.getId(), sesion.getCursoPeriodo());
     }
 }

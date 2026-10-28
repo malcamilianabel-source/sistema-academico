@@ -25,19 +25,23 @@ public class PeriodoAcademicoController {
         return vistaLista(model, null);
     }
 
+    // Cualquier error (nombre repetido, fechas incoherentes) vuelve al modal con lo escrito.
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute("periodo") PeriodoAcademico periodo, BindingResult result,
                           Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            return vistaLista(model, "modalNuevo");
+        if (!result.hasErrors()) {
+            try {
+                periodo.setId(null);
+                service.guardar(periodo);
+                ra.addFlashAttribute("mensaje", "Periodo registrado correctamente.");
+                return "redirect:/periodos";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        try {
-            service.guardar(periodo);
-            ra.addFlashAttribute("mensaje", "Periodo registrado correctamente.");
-        } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/periodos";
+        return vistaLista(model, "modalNuevo");
     }
 
     @GetMapping("/editar/{id}")
@@ -49,16 +53,22 @@ public class PeriodoAcademicoController {
     @PostMapping("/actualizar")
     public String actualizar(@Valid @ModelAttribute("periodoEditar") PeriodoAcademico periodo, BindingResult result,
                              Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) {
-            return vistaLista(model, "modalEditar");
+        if (periodo.getId() == null || service.buscarPorId(periodo.getId()).isEmpty()) {
+            ra.addFlashAttribute("error", "El periodo no existe.");
+            return "redirect:/periodos";
         }
-        try {
-            service.guardar(periodo);
-            ra.addFlashAttribute("mensaje", "Periodo actualizado correctamente.");
-        } catch (IllegalArgumentException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+        if (!result.hasErrors()) {
+            try {
+                service.guardar(periodo);
+                ra.addFlashAttribute("mensaje", "Periodo actualizado correctamente.");
+                return "redirect:/periodos";
+            } catch (IllegalArgumentException e) {
+                Formularios.rechazar(result, e);
+            } catch (DataIntegrityViolationException e) {
+                Formularios.rechazarRegistroSimultaneo(result);
+            }
         }
-        return "redirect:/periodos";
+        return vistaLista(model, "modalEditar");
     }
 
     @PostMapping("/eliminar/{id}")
@@ -66,9 +76,51 @@ public class PeriodoAcademicoController {
         try {
             service.eliminar(id);
             ra.addFlashAttribute("mensaje", "Periodo eliminado correctamente.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
         } catch (DataIntegrityViolationException e) {
             ra.addFlashAttribute("error",
-                    "No se puede eliminar el periodo porque tiene asignaciones registradas.");
+                    "No se puede eliminar el periodo porque tiene secciones registradas.");
+        }
+        return "redirect:/periodos";
+    }
+
+    // ── Estado del periodo y matrícula (solo administrador; el interceptor bloquea los POST del docente) ──
+
+    @PostMapping("/{id}/activar")
+    public String activar(@PathVariable Long id, RedirectAttributes ra) {
+        return accion(ra, () -> service.activar(id), "Periodo activado.");
+    }
+
+    @PostMapping("/{id}/cerrar")
+    public String cerrar(@PathVariable Long id, RedirectAttributes ra) {
+        int[] culminadas = {0};
+        String vista = accion(ra, () -> culminadas[0] = service.cerrar(id), null);
+        if (!ra.getFlashAttributes().containsKey("error")) {
+            ra.addFlashAttribute("mensaje", "Periodo cerrado. Su matrícula quedó cerrada y "
+                    + culminadas[0] + " matrícula(s) activa(s) pasaron a CULMINADO.");
+        }
+        return vista;
+    }
+
+    @PostMapping("/{id}/abrir-matricula")
+    public String abrirMatricula(@PathVariable Long id, RedirectAttributes ra) {
+        return accion(ra, () -> service.abrirMatricula(id), "Matrícula abierta: los estudiantes ya pueden inscribirse.");
+    }
+
+    @PostMapping("/{id}/cerrar-matricula")
+    public String cerrarMatricula(@PathVariable Long id, RedirectAttributes ra) {
+        return accion(ra, () -> service.cerrarMatricula(id), "Matrícula cerrada.");
+    }
+
+    private String accion(RedirectAttributes ra, Runnable operacion, String mensaje) {
+        try {
+            operacion.run();
+            if (mensaje != null) ra.addFlashAttribute("mensaje", mensaje);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("error", "Otro usuario cambió el estado de los periodos al mismo tiempo. Inténtalo de nuevo.");
         }
         return "redirect:/periodos";
     }

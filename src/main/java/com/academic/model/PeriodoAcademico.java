@@ -32,4 +32,20 @@ public class PeriodoAcademico {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Column(name = "fecha_fin")
     private LocalDate fechaFin;
+
+    /** PLANIFICADO → ACTIVO → CERRADO. Solo puede haber un periodo ACTIVO. */
+    @Column(nullable = false, length = 20)
+    private String estado = ESTADO_PLANIFICADO;
+
+    /** Si los estudiantes pueden matricularse en este periodo. Solo un periodo a la vez. */
+    @Column(name = "matricula_abierta", nullable = false)
+    private boolean matriculaAbierta = false;
+
+    public static final String ESTADO_PLANIFICADO = "PLANIFICADO";
+    public static final String ESTADO_ACTIVO = "ACTIVO";
+    public static final String ESTADO_CERRADO = "CERRADO";
+
+    public boolean isCerrado() {
+        return ESTADO_CERRADO.equals(estado);
+    }
 }

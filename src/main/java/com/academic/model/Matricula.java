@@ -28,6 +28,10 @@ public class Matricula {
     @JoinColumn(name = "curso_periodo_id", nullable = false)
     private CursoPeriodo cursoPeriodo;
 
+    @JdbcTypeCode(SqlTypes.NUMERIC)
+    @Column(name = "nota_final")
+    private Double notaFinal;
+
     @Column(name = "fecha_matricula")
     private LocalDate fechaMatricula;
 

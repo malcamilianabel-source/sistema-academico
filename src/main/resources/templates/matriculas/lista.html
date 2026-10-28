@@ -1,11 +1,189 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Matrículas - Sistema Académico</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet"><link th:href="@{/css/estilos.css}" rel="stylesheet"></head>
-<body><div id="sidebar-overlay"></div><div class="d-flex"><div th:replace="~{fragments/sidebar :: sidebar}"></div><div id="main-content" class="flex-grow-1">
-<div class="top-navbar"><div class="d-flex align-items-center gap-2"><button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button><h1 class="page-title">Matrículas</h1></div></div>
-<div class="page-content"><div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div><div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-<div class="tabla-container p-3"><p>Consulta las matrículas y da de baja las que estén activas.</p><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Estudiante</th><th>Curso</th><th>Periodo</th><th>Docente</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
-<tr th:each="m : ${matriculas}"><td th:text="${m.estudiante.nombre + ' ' + m.estudiante.apellido}"></td><td th:text="${m.cursoPeriodo.curso.nombre}"></td><td th:text="${m.cursoPeriodo.periodo.nombre}"></td><td th:text="${m.cursoPeriodo.docente.nombre + ' ' + m.cursoPeriodo.docente.apellido}"></td><td th:text="${m.estado}"></td><td><form th:if="${m.estado == 'ACTIVO'}" th:action="@{/matriculas/baja/{id}(id=${m.id})}" method="post" onsubmit="return confirm('¿Dar de baja esta matrícula?');"><button class="btn btn-sm btn-outline-danger" type="submit">Dar de baja</button></form></td></tr>
-<tr th:if="${#lists.isEmpty(matriculas)}"><td colspan="6">No hay matrículas registradas.</td></tr></tbody></table></div></div></div></div></div>
-<script>const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),btn=document.getElementById('sidebarToggle');if(btn)btn.addEventListener('click',()=>{sb.classList.add('sidebar-open');ov.classList.add('show');});if(ov)ov.addEventListener('click',()=>{sb.classList.remove('sidebar-open');ov.classList.remove('show');});</script></body></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrículas - Sistema Académico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/estilos.css}" rel="stylesheet">
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+<div class="d-flex">
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div id="main-content" class="flex-grow-1">
+        <div class="top-navbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-sidebar-toggle" id="sidebarToggle" type="button"><i class="bi bi-list"></i></button>
+                <h1 class="page-title"><i class="bi bi-journal-check me-2"></i>Matrículas</h1>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-name-sm" style="font-size:0.85rem;color:#3D4D55;" th:text="${session.usuario.nombre + ' ' + session.usuario.apellido}"></span>
+                <div class="user-badge" th:text="${#strings.substring(session.usuario.nombre,0,1)}"></div>
+            </div>
+        </div>
+        <div class="page-content">
+            <div th:if="${mensaje}" class="alert alert-success d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-check-circle-fill"></i><span th:text="${mensaje}"></span></div>
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2"><i class="bi bi-exclamation-triangle-fill"></i><span th:text="${error}"></span></div>
+
+            <!-- Filtros -->
+            <div class="tabla-container mb-3">
+                <form th:action="@{/matriculas}" method="get" class="p-3" id="formFiltros">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-6 col-xl-2">
+                            <label class="form-label small mb-1" for="fQ">Estudiante</label>
+                            <input type="search" id="fQ" name="q" class="form-control form-control-sm" maxlength="60"
+                                   th:value="${filtros.q}">
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small mb-1" for="fPeriodo">Periodo</label>
+                            <select id="fPeriodo" name="periodoId" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <option th:each="p : ${periodos}" th:value="${p.id}" th:selected="${p.id == filtros.periodoId}"
+                                        th:text="${p.nombre + (p.estado == 'ACTIVO' ? ' (activo)' : '')}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small mb-1" for="fCurso">Curso</label>
+                            <select id="fCurso" name="cursoId" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <option th:each="c : ${cursos}" th:value="${c.id}" th:selected="${c.id == filtros.cursoId}"
+                                        th:text="${c.nombre}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small mb-1" for="fSeccion">Sección</label>
+                            <select id="fSeccion" name="seccionId" class="form-select form-select-sm">
+                                <option value="">Todas</option>
+                                <option th:each="s : ${secciones}" th:value="${s.id}" th:selected="${s.id == filtros.seccionId}"
+                                        th:attr="data-periodo=${s.periodo.id},data-curso=${s.curso.id}"
+                                        th:text="${s.curso.nombre + ' · ' + s.seccion + ' · ' + s.periodo.nombre}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small mb-1" for="fEstado">Estado</label>
+                            <select id="fEstado" name="estado" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <option th:each="e : ${estados}" th:value="${e}" th:selected="${e == filtros.estado}"
+                                        th:text="${#strings.capitalize(#strings.toLowerCase(e))}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-sm btn-accent flex-grow-1"><i class="bi bi-funnel-fill me-1"></i>Filtrar</button>
+                            <a th:href="@{/matriculas(periodoId='')}" class="btn btn-sm btn-outline-secondary" title="Quitar filtros">Limpiar</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tabla-container">
+                <div class="tabla-header">
+                    <div>
+                        <h5 class="mb-1">Matrículas encontradas: <span th:text="${#lists.size(matriculas)}"></span></h5>
+                        <div class="d-flex gap-2 flex-wrap small">
+                            <span class="badge bg-success-subtle text-success-emphasis" th:text="${'Activas: ' + totales['ACTIVO']}"></span>
+                            <span class="badge bg-danger-subtle text-danger-emphasis" th:text="${'Retiradas: ' + totales['RETIRADO']}"></span>
+                            <span class="badge bg-primary-subtle text-primary-emphasis" th:text="${'Culminadas: ' + totales['CULMINADO']}"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-accent" data-bs-toggle="modal" data-bs-target="#modalNueva"><i class="bi bi-plus-lg me-1"></i> Nueva matrícula</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead><tr><th>Estudiante</th><th>Curso</th><th>Sección</th><th class="col-hide-sm">Periodo</th><th class="col-hide-sm">Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody>
+                        <tr th:each="m : ${matriculas}" th:with="cp=${m.cursoPeriodo}, cerrado=${m.cursoPeriodo.periodo.cerrado}">
+                            <td><div th:text="${m.estudiante.apellido + ', ' + m.estudiante.nombre}"></div>
+                                <small class="text-muted" th:text="${'DNI ' + m.estudiante.dni}"></small></td>
+                            <td><span class="badge me-1" style="background-color:#3D4D55;" th:text="${cp.curso.codigo}"></span><span th:text="${cp.curso.nombre}"></span></td>
+                            <td><span class="badge" style="background-color:#B58863;" th:text="${cp.seccion}"></span></td>
+                            <td class="col-hide-sm" th:text="${cp.periodo.nombre}"></td>
+                            <td class="col-hide-sm" th:text="${m.fechaMatricula != null ? #temporals.format(m.fechaMatricula, 'dd/MM/yyyy') : '-'}"></td>
+                            <td>
+                                <span th:if="${m.estado == 'ACTIVO'}" class="badge bg-success-subtle text-success-emphasis">Activo</span>
+                                <span th:if="${m.estado == 'RETIRADO'}" class="badge bg-danger-subtle text-danger-emphasis">Retirado</span>
+                                <span th:if="${m.estado == 'CULMINADO'}" class="badge bg-primary-subtle text-primary-emphasis">Culminado</span>
+                            </td>
+                            <td class="text-nowrap">
+                                <a th:href="@{/matriculas/{id}(id=${m.id})}" class="btn btn-sm btn-outline-secondary" title="Ver detalle"><i class="bi bi-eye-fill"></i></a>
+                                <form th:if="${m.estado == 'ACTIVO' and !cerrado}" th:action="@{/matriculas/baja/{id}(id=${m.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('¿Retirar esta matrícula? Se conservan sus notas y asistencias, pero el estudiante no podrá volver a matricularse en este curso y periodo.')">
+                                    <input type="hidden" name="volver" th:value="${consulta}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Retirar"><i class="bi bi-person-dash-fill"></i></button>
+                                </form>
+                                <form th:if="${m.estado == 'RETIRADO' and !cerrado}" th:action="@{/matriculas/{id}/reactivar(id=${m.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('¿Reactivar esta matrícula?')">
+                                    <input type="hidden" name="volver" th:value="${consulta}">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Reactivar"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(matriculas)}"><td colspan="7" class="text-center text-muted py-4">No hay matrículas con estos filtros.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nueva matrícula (administrador) -->
+<div class="modal fade" id="modalNueva" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Nueva matrícula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form th:action="@{/matriculas/guardar}" th:object="${matriculaForm}" method="post" novalidate><div class="modal-body">
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small mb-3" th:text="${#fields.globalErrors()[0]}"></div>
+        <p class="small text-muted">Puedes matricular en cualquier periodo planificado o activo, aunque la matrícula de estudiantes esté cerrada. Se valida que haya vacantes y que el estudiante no esté ya en ese curso y periodo.</p>
+        <div class="mb-3">
+            <label class="form-label" for="nEstudiante">Estudiante</label>
+            <select th:field="*{estudianteId}" id="nEstudiante" th:errorclass="is-invalid" class="form-select" required>
+                <option value="">Selecciona un estudiante</option>
+                <option th:each="e : ${estudiantes}" th:value="${e.id}" th:text="${e.apellido + ', ' + e.nombre + ' · DNI ' + e.dni}"></option>
+            </select>
+            <div class="invalid-feedback" th:errors="*{estudianteId}">Selecciona un estudiante</div>
+        </div>
+        <div class="mb-1">
+            <label class="form-label" for="nSeccion">Sección</label>
+            <select th:field="*{cursoPeriodoId}" id="nSeccion" th:errorclass="is-invalid" class="form-select" required>
+                <option value="">Selecciona una sección</option>
+                <option th:each="s : ${seccionesMatricula}" th:with="libres=${s.vacantes - matriculados.getOrDefault(s.id, 0L)}"
+                        th:value="${s.id}" th:disabled="${libres <= 0}"
+                        th:text="${s.periodo.nombre + ' · ' + s.curso.nombre + ' · Sección ' + s.seccion + (libres > 0 ? ' (' + libres + ' vacantes)' : ' (sin vacantes)')}"></option>
+            </select>
+            <div class="invalid-feedback" th:errors="*{cursoPeriodoId}">Selecciona una sección</div>
+        </div>
+    </div><div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-accent btn-sm"><i class="bi bi-check-lg me-1"></i>Matricular</button>
+    </div></form>
+</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/formularios.js}"></script>
+<script>
+    const sb = document.getElementById('sidebar'), ov = document.getElementById('sidebar-overlay'), btn = document.getElementById('sidebarToggle');
+    if (btn) btn.addEventListener('click', () => { sb.classList.add('sidebar-open'); ov.classList.add('show'); });
+    if (ov) ov.addEventListener('click', () => { sb.classList.remove('sidebar-open'); ov.classList.remove('show'); });
+
+    // Filtro en cascada: la lista de secciones solo muestra las del periodo y curso elegidos
+    (function () {
+        const periodo = document.getElementById('fPeriodo'), curso = document.getElementById('fCurso'), seccion = document.getElementById('fSeccion');
+        function actualizar() {
+            seccion.querySelectorAll('option[data-periodo]').forEach(o => {
+                const visible = (!periodo.value || o.dataset.periodo === periodo.value) && (!curso.value || o.dataset.curso === curso.value);
+                o.hidden = !visible;
+                o.disabled = !visible;
+                if (!visible && o.selected) seccion.value = '';
+            });
+        }
+        periodo.addEventListener('change', actualizar);
+        curso.addEventListener('change', actualizar);
+        actualizar();
+    })();
+</script>
+<script th:inline="javascript">
+    const abrirModal = /*[[${abrirModal}]]*/ null;
+    if (abrirModal) new bootstrap.Modal(document.getElementById(abrirModal)).show();
+</script>
+</body>
+</html>
